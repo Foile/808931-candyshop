@@ -1,7 +1,7 @@
 # Личный проект «Кэндишоп» [![Build status][travis-image]][travis-url]
 
 * Студент: [Foile Kraft](https://up.htmlacademy.ru/javascript/15/user/808931).
-* Наставник: `Неизвестно`.
+* Наставник: `Андрей Рыжаков`.
 
 ---
 
