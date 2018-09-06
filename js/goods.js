@@ -33,19 +33,18 @@ var generateRandomGoods = function (count) {
     nutritionFacts.energy = getRandomNumber(70, 500);
 
     var contents = '';
-
     var contentCount = 0;
     CONTENTS.forEach(function (content) {
-
-      if (getRandomNumber(0, 100) < 50) {
-        contents += content; contentCount++;
+      if (getRandomNumber(0, 100) < 30) {
+        contents += content + ', '; contentCount++;
       }
     });
 
     if (contentCount === 0) {
       contents += getRandomElement(CONTENTS);
+    } else {
+      contents = contents.substring(0, contents.length - 2);
     }
-
     nutritionFacts.contents = contents;
     newGood.nutritionFacts = nutritionFacts;
     goods.push(newGood);
@@ -55,6 +54,7 @@ var generateRandomGoods = function (count) {
 };
 
 var renderCard = function (template, good) {
+
   var card = template.cloneNode(true);
   card.querySelector('.card__title').textContent = good.name;
   card.querySelector('.card__price').innerHTML = good.price + '<span class="card__currency">₽</span><span class="card__weight">/ ' + good.weight + ' Г</span>;';
@@ -83,14 +83,13 @@ var renderCard = function (template, good) {
   card.querySelector('.star__count').textContent = good.rating.number;
   card.querySelector('.card__characteristic').textContent = (good.nutritionFacts.sugar ? 'Содержит сахар. ' : 'Без сахара. ') + good.nutritionFacts.energy + ' ккал';
   card.querySelector('.card__composition-list').textContent = good.nutritionFacts.contents;
-
   return card;
 };
 
 var renderCardOrder = function (template, good) {
   var card = template.cloneNode(true);
   card.querySelector('.card-order__title').textContent = good.name;
-  card.querySelector('.card-order__price').innerHTML = good.price + ' ₽';// '<span class="card__currency">₽</span><span class="card__weight">/ ' + good.weight + ' Г</span>;';
+  card.querySelector('.card-order__price').innerHTML = good.price + ' ₽';
   var img = card.querySelector('.card-order__img');
   img.src = good.picture;
   img.alt = good.name;
