@@ -149,7 +149,6 @@ var checkCardNumber = function (cardNumber) {
   return res === 0;
 };
 
-
 var catalog = document.querySelector('.catalog__cards');
 catalog.classList.remove('catalog__cards--load');
 setHidden(document.querySelector('.catalog__load'), true);
@@ -184,5 +183,6 @@ basket.appendChild(fragmentBasket);
 
 var cardInput = document.getElementById('payment__card-number');
 cardInput.addEventListener('blur', function () {
-  document.querySelector('.payment__card-wrap .payment__card-status').textContent = checkCardNumber(cardInput.value) ? 'Одобрен' : 'Неизвестен';
+  cardInput.valid = checkCardNumber(cardInput.value);
+  document.querySelector('.payment__card-wrap .payment__card-status').textContent = cardInput.valid ? 'Одобрен' : 'Неизвестен';
 });
