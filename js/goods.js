@@ -129,6 +129,27 @@ var renderCardOrder = function (template, good) {
   return card;
 };
 
+var checkCardNumber = function (cardNumber) {
+  var i = 0;
+  var sum = 0;
+  var n = 0;
+  var res = -1;
+  while (i < cardNumber.length) {
+    i++;
+    if (Number(cardNumber[i - 1]) === 0) {
+      sum = 1; continue;
+    }
+    n = Number(cardNumber[i - 1]);
+    if (i % 2 > 0) {
+      n = (n * 2 > 9) ? n * 2 - 9 : n * 2;
+    }
+    sum += n;
+  }
+  res = sum % 10;
+  return res === 0;
+};
+
+
 var catalog = document.querySelector('.catalog__cards');
 catalog.classList.remove('catalog__cards--load');
 setHidden(document.querySelector('.catalog__load'), true);
@@ -160,3 +181,8 @@ basketGoods.forEach(function (good) {
 });
 
 basket.appendChild(fragmentBasket);
+
+var cardInput = document.getElementById('payment__card-number');
+cardInput.addEventListener('blur', function () {
+  document.querySelector('.payment__card-wrap .payment__card-status').textContent = checkCardNumber(cardInput.value) ? 'Одобрен' : 'Неизвестен';
+});
