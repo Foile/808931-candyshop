@@ -280,10 +280,10 @@ var priceRangeFilterRight = rangeFilter.querySelector('.range__btn--right');
 var priceRangeFilterLine = rangeFilter.querySelector('.range__fill-line');
 
 var minX = rangeFilter.clientLeft;
-var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth;
+var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth - priceRangeFilterRight.clientWidth;
 
-var calcFilterValue = function (element, shift) {
-  var filterLeft = (element.offsetLeft - shift);
+var calcFilterValue = function (filterLeft, shift) {
+  filterLeft -= shift;
   if (filterLeft > maxX) {
     filterLeft = maxX;
   }
@@ -293,6 +293,61 @@ var calcFilterValue = function (element, shift) {
   return Math.round((TOTAL_MAX_PRICE * filterLeft) / rangeFilter.clientWidth);
 };
 
+var changePinPosition = function (element, posX) {
+  if (posX < minX) {
+    posX = minX;
+  }
+  if (posX > maxX) {
+    posX = maxX;
+  }
+  element.style.left = posX + 'px';
+};
+
+var checkCardNumber = function (cardNumber) {
+  var i = 0;
+  var sum = 0;
+  var n = 0;
+  var res = -1;
+  while (i < cardNumber.length) {
+    i++;
+    if (Number(cardNumber[i - 1]) === 0) {
+      sum = 1; continue;
+    }
+    n = Number(cardNumber[i - 1]);
+    if (i % 2 > 0) {
+      n = (n * 2 > 9) ? n * 2 - 9 : n * 2;
+    }
+    sum += n;
+  }
+  res = sum % 10;
+  return res === 0;
+};
+
+var onRangeFilterClick = function (evt) {
+  var X = evt.clientX;
+  var filterValue = calcFilterValue(X, 0);
+  if (X < minX + ((maxX - minX) / 2)) {
+    changePinPosition(priceRangeFilterLeft, X - pinWidth);
+    filterMinPrice = filterValue;
+    priceFilterLineUpdate();
+    updatePriceFilter();
+  } else {
+    changePinPosition(priceRangeFilterRight, X - pinWidth);
+    filterMaxPrice = filterValue;
+    priceFilterLineUpdate();
+    updatePriceFilter();
+  }
+};
+
+rangeFilter.addEventListener('click', onRangeFilterClick);
+
+var pinWidth = priceRangeFilterRight.clientWidth;
+
+var priceFilterLineUpdate = function () {
+  priceRangeFilterLine.style.right = (maxX - priceRangeFilterRight.offsetLeft + pinWidth / 2) + 'px';
+  priceRangeFilterLine.style.left = (priceRangeFilterLeft.offsetLeft + pinWidth / 2) + 'px';
+};
+
 priceRangeFilterRight.addEventListener('mousedown', function (evt) {
   evt.preventDefault();
   var startX = evt.clientX;
@@ -300,19 +355,21 @@ priceRangeFilterRight.addEventListener('mousedown', function (evt) {
     moveEvt.preventDefault();
     var shift = startX - moveEvt.clientX;
     startX = moveEvt.clientX;
-    var filterValue = calcFilterValue(priceRangeFilterRight, shift);
+    changePinPosition(priceRangeFilterRight, priceRangeFilterRight.offsetLeft - shift);
+    var centerPosition = priceRangeFilterRight.offsetLeft + pinWidth / 2;
+    var filterValue = calcFilterValue(centerPosition, shift);
     filterValue = (filterValue < filterMinPrice) ? filterMinPrice : filterValue;
-    var percentLeft = (filterValue * 100) / TOTAL_MAX_PRICE;
-    priceRangeFilterRight.style.left = percentLeft + '%';
-    priceRangeFilterLine.style.right = (100 - percentLeft) + '%';
     filterMaxPrice = filterValue;
+    priceFilterLineUpdate();
+    updatePriceFilter();
+    rangeFilter.removeEventListener('click', onRangeFilterClick);
   };
   var onMouseUp = function (upEvt) {
-    updatePriceFilter();
     renderCatalog();
     upEvt.preventDefault();
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
+    rangeFilter.addEventListener('click', onRangeFilterClick);
   };
 
   document.addEventListener('mousemove', onMouseMove);
@@ -322,24 +379,34 @@ priceRangeFilterRight.addEventListener('mousedown', function (evt) {
 priceRangeFilterLeft.addEventListener('mousedown', function (evt) {
   evt.preventDefault();
   var startX = evt.clientX;
+  rangeFilter.removeEventListener('click', onRangeFilterClick);
   var onMouseMove = function (moveEvt) {
     moveEvt.preventDefault();
     var shift = startX - moveEvt.clientX;
     startX = moveEvt.clientX;
-    var filterValue = calcFilterValue(priceRangeFilterLeft, shift);
+    var centerPosition = priceRangeFilterLeft.offsetLeft + pinWidth / 2;
+
+    var filterValue = calcFilterValue(centerPosition, shift);
     filterValue = (filterValue > filterMaxPrice) ? filterMaxPrice : filterValue;
-    var percentLeft = (filterValue * 100) / TOTAL_MAX_PRICE;
-    priceRangeFilterLeft.style.left = percentLeft + '%';
-    priceRangeFilterLine.style.left = priceRangeFilterLeft.style.left;
+    var leftOffset = priceRangeFilterLeft.offsetLeft - shift;
+    if (leftOffset < minX) {
+      leftOffset = minX;
+    }
+    if (leftOffset > maxX) {
+      leftOffset = maxX;
+    }
+    priceRangeFilterLeft.style.left = leftOffset + 'px';
     filterMinPrice = filterValue;
+    priceFilterLineUpdate();
+    updatePriceFilter();
   };
 
   var onMouseUp = function (upEvt) {
-    updatePriceFilter();
     renderCatalog();
     upEvt.preventDefault();
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
+    rangeFilter.addEventListener('click', onRangeFilterClick);
   };
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
@@ -362,12 +429,19 @@ renderCatalog();
 
 var paymentType = document.querySelector('.payment__method');
 paymentType.addEventListener('click', function () {
-  toggleClass(document.querySelector('.payment__card-wrap'), !document.getElementById('payment__card').checked, 'visually-hidden');
-  toggleClass(document.querySelector('.payment__cash-wrap'), !document.getElementById('payment__cash').checked, 'visually-hidden');
+  toggleClass(document.querySelector('.payment__card-wrap'), !document.querySelector('#payment__card').checked, 'visually-hidden');
+  toggleClass(document.querySelector('.payment__cash-wrap'), !document.querySelector('#payment__cash').checked, 'visually-hidden');
 });
 
 var deliverType = document.querySelector('.deliver__toggle');
 deliverType.addEventListener('click', function () {
-  toggleClass(document.querySelector('.deliver__store'), !document.getElementById('deliver__store').checked, 'visually-hidden');
-  toggleClass(document.querySelector('.deliver__courier'), !document.getElementById('deliver__courier').checked, 'visually-hidden');
+  toggleClass(document.querySelector('.deliver__store'), !document.querySelector('#deliver__store').checked, 'visually-hidden');
+  toggleClass(document.querySelector('.deliver__courier'), !document.querySelector('#deliver__courier').checked, 'visually-hidden');
+});
+
+
+var cardInput = document.querySelector('#payment__card-number');
+cardInput.addEventListener('blur', function () {
+  cardInput.valid = checkCardNumber(cardInput.value);
+  document.querySelector('.payment__card-wrap .payment__card-status').textContent = cardInput.valid ? 'Одобрен' : 'Неизвестен';
 });
