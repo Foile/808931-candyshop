@@ -284,8 +284,8 @@ var calcFilterValue = function (pos) {
   return Math.round((TOTAL_MAX_PRICE * pos) / rangeFilter.clientWidth);
 };
 
-var calcFilterPosition = function(value) {
-  return Math.round(maxX*value/TOTAL_MAX_PRICE);
+var calcFilterPosition = function (value) {
+  return Math.round(maxX * value / TOTAL_MAX_PRICE);
 };
 
 var changePinPosition = function (element, X, min, max) {
@@ -339,8 +339,8 @@ var updatePriceFilter = function () {
 
 initPriceFilter();
 
-var minX = rangeFilter.clientLeft - priceRangeFilterRight.clientWidth/2;
-var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth - priceRangeFilterRight.clientWidth/2;
+var minX = rangeFilter.clientLeft - priceRangeFilterRight.clientWidth / 2;
+var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth - priceRangeFilterRight.clientWidth / 2;
 
 var onRangeFilterClick = function (evt) {
   evt.preventDefault();
