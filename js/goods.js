@@ -310,7 +310,7 @@ var pinWidth = priceRangeFilterRight.clientWidth;
 
 var priceFilterLineUpdate = function () {
   var left = priceRangeFilterLeft.offsetLeft;
-  var right = priceRangeFilterRight.offsetLeft
+  var right = priceRangeFilterRight.offsetLeft;
   if (left > right) {
     right = priceRangeFilterLeft.offsetLeft;
     left = priceRangeFilterRight.offsetLeft;
