@@ -258,50 +258,6 @@ var renderBasket = function () {
   basket.appendChild(fragmentBasket);
   document.querySelector('.main-header__basket').textContent = (goodsInBasket > 0) ? goodsInBasket : 'В корзине ничего нет';
 };
-var initPriceFilter = function () {
-  document.querySelector('.range__prices .range__price--min').textContent = MIN_PRICE;
-  document.querySelector('.range__prices .range__price--max').textContent = MAX_PRICE;
-  filterMinPrice = MIN_PRICE;
-  filterMaxPrice = MAX_PRICE;
-};
-var updatePriceFilter = function () {
-  document.querySelector('.range__prices .range__price--min').textContent = filterMinPrice;
-  document.querySelector('.range__prices .range__price--max').textContent = filterMaxPrice;
-};
-
-var goods = generateRandomGoods(GOODS_COUNT);
-var goodsInBasket;
-var filterMinPrice;
-var filterMaxPrice;
-initPriceFilter();
-var rangeFilter = document.querySelector('.range__filter');
-var priceRangeFilterLeft = rangeFilter.querySelector('.range__btn--left');
-var priceRangeFilterRight = rangeFilter.querySelector('.range__btn--right');
-var priceRangeFilterLine = rangeFilter.querySelector('.range__fill-line');
-
-var minX = rangeFilter.clientLeft;
-var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth - priceRangeFilterRight.clientWidth;
-
-var calcFilterValue = function (filterLeft, shift) {
-  filterLeft -= shift;
-  if (filterLeft > maxX) {
-    filterLeft = maxX;
-  }
-  if (filterLeft < minX) {
-    filterLeft = minX;
-  }
-  return Math.round((TOTAL_MAX_PRICE * filterLeft) / rangeFilter.clientWidth);
-};
-
-var changePinPosition = function (element, posX) {
-  if (posX < minX) {
-    posX = minX;
-  }
-  if (posX > maxX) {
-    posX = maxX;
-  }
-  element.style.left = posX + 'px';
-};
 
 var checkCardNumber = function (cardNumber) {
   var i = 0;
@@ -323,45 +279,99 @@ var checkCardNumber = function (cardNumber) {
   return res === 0;
 };
 
-var onRangeFilterClick = function (evt) {
-  var X = evt.clientX;
-  var filterValue = calcFilterValue(X, 0);
-  if (X < minX + ((maxX - minX) / 2)) {
-    changePinPosition(priceRangeFilterLeft, X - pinWidth);
-    filterMinPrice = filterValue;
-    priceFilterLineUpdate();
-    updatePriceFilter();
-  } else {
-    changePinPosition(priceRangeFilterRight, X - pinWidth);
-    filterMaxPrice = filterValue;
-    priceFilterLineUpdate();
-    updatePriceFilter();
-  }
+var calcFilterValue = function (pos) {
+  pos += pinWidth / 2;
+  return Math.round((TOTAL_MAX_PRICE * pos) / rangeFilter.clientWidth);
 };
 
-rangeFilter.addEventListener('click', onRangeFilterClick);
+var calcFilterPosition = function (value) {
+  return Math.round(maxX * value / TOTAL_MAX_PRICE);
+};
 
+var changePinPosition = function (element, X, min, max) {
+  if (X < min) {
+    X = min;
+  }
+  if (X > max) {
+    X = max;
+  }
+  element.style.left = X + 'px';
+};
+
+var goods = generateRandomGoods(GOODS_COUNT);
+var goodsInBasket;
+var filterMinPrice = MIN_PRICE;
+var filterMaxPrice = MAX_PRICE;
+var rangeFilter = document.querySelector('.range__filter');
+var priceRangeFilterLeft = rangeFilter.querySelector('.range__btn--left');
+var priceRangeFilterRight = rangeFilter.querySelector('.range__btn--right');
+var priceRangeFilterLine = rangeFilter.querySelector('.range__fill-line');
 var pinWidth = priceRangeFilterRight.clientWidth;
 
 var priceFilterLineUpdate = function () {
-  priceRangeFilterLine.style.right = (maxX - priceRangeFilterRight.offsetLeft + pinWidth / 2) + 'px';
-  priceRangeFilterLine.style.left = (priceRangeFilterLeft.offsetLeft + pinWidth / 2) + 'px';
+  var left = priceRangeFilterLeft.offsetLeft;
+  var right = priceRangeFilterRight.offsetLeft;
+  if (left > right) {
+    right = priceRangeFilterLeft.offsetLeft;
+    left = priceRangeFilterRight.offsetLeft;
+  }
+  filterMinPrice = calcFilterValue(left);
+  filterMaxPrice = calcFilterValue(right);
+  priceRangeFilterLine.style.right = (maxX - right) + 'px';
+  priceRangeFilterLine.style.left = (left + pinWidth / 2) + 'px';
+  updatePriceFilter();
 };
 
-priceRangeFilterRight.addEventListener('mousedown', function (evt) {
+var initPriceFilter = function () {
+  document.querySelector('.range__prices .range__price--min').textContent = MIN_PRICE;
+  document.querySelector('.range__prices .range__price--max').textContent = MAX_PRICE;
+  filterMinPrice = MIN_PRICE;
+  filterMaxPrice = MAX_PRICE;
+  changePinPosition(priceRangeFilterLeft, calcFilterPosition(filterMinPrice));
+  changePinPosition(priceRangeFilterRight, calcFilterPosition(filterMaxPrice));
+  priceFilterLineUpdate();
+};
+
+var updatePriceFilter = function () {
+  document.querySelector('.range__prices .range__price--min').textContent = filterMinPrice;
+  document.querySelector('.range__prices .range__price--max').textContent = filterMaxPrice;
+};
+
+initPriceFilter();
+
+var minX = rangeFilter.clientLeft - priceRangeFilterRight.clientWidth / 2;
+var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth - priceRangeFilterRight.clientWidth / 2;
+var pinMoved = false;
+var onRangeFilterClick = function (evt) {
+  evt.preventDefault();
+  if (pinMoved) {
+    pinMoved = false;
+    return;
+  }
+  var X = evt.clientX;
+  var filterValue = calcFilterValue(X);
+  if (X < minX + ((maxX - minX) / 2)) {
+    changePinPosition(priceRangeFilterLeft, X - 1.5 * pinWidth, minX, priceRangeFilterRight.offsetLeft);
+    filterMinPrice = filterValue;
+  } else {
+    changePinPosition(priceRangeFilterRight, X - 1.5 * pinWidth, priceRangeFilterLeft.offsetLeft, maxX);
+    filterMaxPrice = filterValue;
+  }
+  pinMoved = false;
+  priceFilterLineUpdate();
+  renderCatalog();
+};
+
+var onFilterPinMouseDown = function (evt) {
   evt.preventDefault();
   var startX = evt.clientX;
   var onMouseMove = function (moveEvt) {
+    pinMoved = true;
     moveEvt.preventDefault();
     var shift = startX - moveEvt.clientX;
     startX = moveEvt.clientX;
-    changePinPosition(priceRangeFilterRight, priceRangeFilterRight.offsetLeft - shift);
-    var centerPosition = priceRangeFilterRight.offsetLeft + pinWidth / 2;
-    var filterValue = calcFilterValue(centerPosition, shift);
-    filterValue = (filterValue < filterMinPrice) ? filterMinPrice : filterValue;
-    filterMaxPrice = filterValue;
+    changePinPosition(evt.target, evt.target.offsetLeft - shift, minX, maxX);
     priceFilterLineUpdate();
-    updatePriceFilter();
     rangeFilter.removeEventListener('click', onRangeFilterClick);
   };
   var onMouseUp = function (upEvt) {
@@ -370,49 +380,21 @@ priceRangeFilterRight.addEventListener('mousedown', function (evt) {
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
     rangeFilter.addEventListener('click', onRangeFilterClick);
+    rangeFilter.addEventListener('mouseleave', function () {
+      pinMoved = false;
+    });
   };
 
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
-});
+};
 
-priceRangeFilterLeft.addEventListener('mousedown', function (evt) {
+rangeFilter.addEventListener('click', onRangeFilterClick);
+priceRangeFilterRight.addEventListener('mousedown', onFilterPinMouseDown);
+priceRangeFilterLeft.addEventListener('mousedown', onFilterPinMouseDown);
+
+document.querySelector('.catalog__submit').addEventListener('click', function (evt) {
   evt.preventDefault();
-  var startX = evt.clientX;
-  rangeFilter.removeEventListener('click', onRangeFilterClick);
-  var onMouseMove = function (moveEvt) {
-    moveEvt.preventDefault();
-    var shift = startX - moveEvt.clientX;
-    startX = moveEvt.clientX;
-    var centerPosition = priceRangeFilterLeft.offsetLeft + pinWidth / 2;
-
-    var filterValue = calcFilterValue(centerPosition, shift);
-    filterValue = (filterValue > filterMaxPrice) ? filterMaxPrice : filterValue;
-    var leftOffset = priceRangeFilterLeft.offsetLeft - shift;
-    if (leftOffset < minX) {
-      leftOffset = minX;
-    }
-    if (leftOffset > maxX) {
-      leftOffset = maxX;
-    }
-    priceRangeFilterLeft.style.left = leftOffset + 'px';
-    filterMinPrice = filterValue;
-    priceFilterLineUpdate();
-    updatePriceFilter();
-  };
-
-  var onMouseUp = function (upEvt) {
-    renderCatalog();
-    upEvt.preventDefault();
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-    rangeFilter.addEventListener('click', onRangeFilterClick);
-  };
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-});
-
-document.querySelector('.catalog__submit').addEventListener('click', function () {
   initPriceFilter();
   renderCatalog();
 });
