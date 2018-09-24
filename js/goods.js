@@ -258,94 +258,143 @@ var renderBasket = function () {
   basket.appendChild(fragmentBasket);
   document.querySelector('.main-header__basket').textContent = (goodsInBasket > 0) ? goodsInBasket : 'В корзине ничего нет';
 };
+
+var checkCardNumber = function (cardNumber) {
+  var i = 0;
+  var sum = 0;
+  var n = 0;
+  var res = -1;
+  while (i < cardNumber.length) {
+    i++;
+    if (Number(cardNumber[i - 1]) === 0) {
+      sum = 1; continue;
+    }
+    n = Number(cardNumber[i - 1]);
+    if (i % 2 > 0) {
+      n = (n * 2 > 9) ? n * 2 - 9 : n * 2;
+    }
+    sum += n;
+  }
+  res = sum % 10;
+  return res === 0;
+};
+
+var calcFilterValue = function (pos) {
+  pos += pinWidth / 2;
+  return Math.round((TOTAL_MAX_PRICE * pos) / rangeFilter.clientWidth);
+};
+
+var calcFilterPosition = function (value) {
+  return Math.round(maxX * value / TOTAL_MAX_PRICE);
+};
+
+var changePinPosition = function (element, X, min, max) {
+  if (X < min) {
+    X = min;
+  }
+  if (X > max) {
+    X = max;
+  }
+  element.style.left = X + 'px';
+};
+
+var goods = generateRandomGoods(GOODS_COUNT);
+var goodsInBasket;
+var filterMinPrice = MIN_PRICE;
+var filterMaxPrice = MAX_PRICE;
+var rangeFilter = document.querySelector('.range__filter');
+var priceRangeFilterLeft = rangeFilter.querySelector('.range__btn--left');
+var priceRangeFilterRight = rangeFilter.querySelector('.range__btn--right');
+var priceRangeFilterLine = rangeFilter.querySelector('.range__fill-line');
+var pinWidth = priceRangeFilterRight.clientWidth;
+
+var priceFilterLineUpdate = function () {
+  var left = priceRangeFilterLeft.offsetLeft;
+  var right = priceRangeFilterRight.offsetLeft;
+  if (left > right) {
+    right = priceRangeFilterLeft.offsetLeft;
+    left = priceRangeFilterRight.offsetLeft;
+  }
+  filterMinPrice = calcFilterValue(left);
+  filterMaxPrice = calcFilterValue(right);
+  priceRangeFilterLine.style.right = (maxX - right) + 'px';
+  priceRangeFilterLine.style.left = (left + pinWidth / 2) + 'px';
+  updatePriceFilter();
+};
+
 var initPriceFilter = function () {
   document.querySelector('.range__prices .range__price--min').textContent = MIN_PRICE;
   document.querySelector('.range__prices .range__price--max').textContent = MAX_PRICE;
   filterMinPrice = MIN_PRICE;
   filterMaxPrice = MAX_PRICE;
+  changePinPosition(priceRangeFilterLeft, calcFilterPosition(filterMinPrice));
+  changePinPosition(priceRangeFilterRight, calcFilterPosition(filterMaxPrice));
+  priceFilterLineUpdate();
 };
+
 var updatePriceFilter = function () {
   document.querySelector('.range__prices .range__price--min').textContent = filterMinPrice;
   document.querySelector('.range__prices .range__price--max').textContent = filterMaxPrice;
 };
 
-var goods = generateRandomGoods(GOODS_COUNT);
-var goodsInBasket;
-var filterMinPrice;
-var filterMaxPrice;
 initPriceFilter();
-var rangeFilter = document.querySelector('.range__filter');
-var priceRangeFilterLeft = rangeFilter.querySelector('.range__btn--left');
-var priceRangeFilterRight = rangeFilter.querySelector('.range__btn--right');
-var priceRangeFilterLine = rangeFilter.querySelector('.range__fill-line');
 
-var minX = rangeFilter.clientLeft;
-var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth;
-
-var calcFilterValue = function (element, shift) {
-  var filterLeft = (element.offsetLeft - shift);
-  if (filterLeft > maxX) {
-    filterLeft = maxX;
+var minX = rangeFilter.clientLeft - priceRangeFilterRight.clientWidth / 2;
+var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth - priceRangeFilterRight.clientWidth / 2;
+var pinMoved = false;
+var onRangeFilterClick = function (evt) {
+  evt.preventDefault();
+  if (pinMoved) {
+    pinMoved = false;
+    return;
   }
-  if (filterLeft < minX) {
-    filterLeft = minX;
+  var X = evt.clientX - rangeFilter.offsetLeft;
+  var filterValue = calcFilterValue(X);
+  if (X < minX + ((maxX - minX) / 2)) {
+    changePinPosition(priceRangeFilterLeft, X - 0.5 * pinWidth, minX, priceRangeFilterRight.offsetLeft);
+    filterMinPrice = filterValue;
+  } else {
+    changePinPosition(priceRangeFilterRight, X - 0.5 * pinWidth, priceRangeFilterLeft.offsetLeft, maxX);
+    filterMaxPrice = filterValue;
   }
-  return Math.round((TOTAL_MAX_PRICE * filterLeft) / rangeFilter.clientWidth);
+  pinMoved = false;
+  priceFilterLineUpdate();
+  renderCatalog();
 };
 
-priceRangeFilterRight.addEventListener('mousedown', function (evt) {
+var onFilterPinMouseDown = function (evt) {
   evt.preventDefault();
   var startX = evt.clientX;
   var onMouseMove = function (moveEvt) {
+    pinMoved = true;
     moveEvt.preventDefault();
     var shift = startX - moveEvt.clientX;
     startX = moveEvt.clientX;
-    var filterValue = calcFilterValue(priceRangeFilterRight, shift);
-    filterValue = (filterValue < filterMinPrice) ? filterMinPrice : filterValue;
-    var percentLeft = (filterValue * 100) / TOTAL_MAX_PRICE;
-    priceRangeFilterRight.style.left = percentLeft + '%';
-    priceRangeFilterLine.style.right = (100 - percentLeft) + '%';
-    filterMaxPrice = filterValue;
+    changePinPosition(evt.target, evt.target.offsetLeft - shift, minX, maxX);
+    priceFilterLineUpdate();
+    rangeFilter.removeEventListener('click', onRangeFilterClick);
   };
   var onMouseUp = function (upEvt) {
-    updatePriceFilter();
     renderCatalog();
     upEvt.preventDefault();
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
+    rangeFilter.addEventListener('click', onRangeFilterClick);
+    rangeFilter.addEventListener('mouseleave', function () {
+      pinMoved = false;
+    });
   };
 
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
-});
+};
 
-priceRangeFilterLeft.addEventListener('mousedown', function (evt) {
+rangeFilter.addEventListener('click', onRangeFilterClick);
+priceRangeFilterRight.addEventListener('mousedown', onFilterPinMouseDown);
+priceRangeFilterLeft.addEventListener('mousedown', onFilterPinMouseDown);
+
+document.querySelector('.catalog__submit').addEventListener('click', function (evt) {
   evt.preventDefault();
-  var startX = evt.clientX;
-  var onMouseMove = function (moveEvt) {
-    moveEvt.preventDefault();
-    var shift = startX - moveEvt.clientX;
-    startX = moveEvt.clientX;
-    var filterValue = calcFilterValue(priceRangeFilterLeft, shift);
-    filterValue = (filterValue > filterMaxPrice) ? filterMaxPrice : filterValue;
-    var percentLeft = (filterValue * 100) / TOTAL_MAX_PRICE;
-    priceRangeFilterLeft.style.left = percentLeft + '%';
-    priceRangeFilterLine.style.left = priceRangeFilterLeft.style.left;
-    filterMinPrice = filterValue;
-  };
-
-  var onMouseUp = function (upEvt) {
-    updatePriceFilter();
-    renderCatalog();
-    upEvt.preventDefault();
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-  };
-  document.addEventListener('mousemove', onMouseMove);
-  document.addEventListener('mouseup', onMouseUp);
-});
-
-document.querySelector('.catalog__submit').addEventListener('click', function () {
   initPriceFilter();
   renderCatalog();
 });
@@ -362,12 +411,19 @@ renderCatalog();
 
 var paymentType = document.querySelector('.payment__method');
 paymentType.addEventListener('click', function () {
-  toggleClass(document.querySelector('.payment__card-wrap'), !document.getElementById('payment__card').checked, 'visually-hidden');
-  toggleClass(document.querySelector('.payment__cash-wrap'), !document.getElementById('payment__cash').checked, 'visually-hidden');
+  toggleClass(document.querySelector('.payment__card-wrap'), !document.querySelector('#payment__card').checked, 'visually-hidden');
+  toggleClass(document.querySelector('.payment__cash-wrap'), !document.querySelector('#payment__cash').checked, 'visually-hidden');
 });
 
 var deliverType = document.querySelector('.deliver__toggle');
 deliverType.addEventListener('click', function () {
-  toggleClass(document.querySelector('.deliver__store'), !document.getElementById('deliver__store').checked, 'visually-hidden');
-  toggleClass(document.querySelector('.deliver__courier'), !document.getElementById('deliver__courier').checked, 'visually-hidden');
+  toggleClass(document.querySelector('.deliver__store'), !document.querySelector('#deliver__store').checked, 'visually-hidden');
+  toggleClass(document.querySelector('.deliver__courier'), !document.querySelector('#deliver__courier').checked, 'visually-hidden');
+});
+
+
+var cardInput = document.querySelector('#payment__card-number');
+cardInput.addEventListener('blur', function () {
+  cardInput.valid = checkCardNumber(cardInput.value);
+  document.querySelector('.payment__card-wrap .payment__card-status').textContent = cardInput.valid ? 'Одобрен' : 'Неизвестен';
 });
