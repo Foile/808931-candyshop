@@ -14,7 +14,7 @@
     card.querySelector('.card-order__title').textContent = good.name;
     card.querySelector('.card-order__price').textContent = good.price + ' ₽';
     var img = card.querySelector('.card-order__img');
-    img.src = good.picture;
+    img.src = window.picturePath + good.picture;
     img.alt = good.name;
     card.querySelector('.card-order__count').value = good.count;
     card.querySelector('.card-order__btn--decrease').addEventListener('click', function () {
@@ -48,20 +48,35 @@
     return card;
   };
 
+  var onOrderSubmit = function (evt) {
+    var form = evt.target;
+    evt.preventDefault();
+    var formData = new FormData(form);
+    var onLoad = function () {
+      window.toggleClass(document.querySelector('.modal--success'), false, 'visually-hidden');
+      window.init();
+    };
+    window.sendOrder(formData, onLoad, window.onError);
+  };
+
   var togglePayForm = function (form, enable) {
+    form.addEventListener('submit', onOrderSubmit);
     form.querySelectorAll('input').forEach(function (input) {
       input.removeAttribute('disabled');
       if (!enable) {
         input.setAttribute('disabled', undefined);
+        form.removeEventListener('submit', onOrderSubmit);
       }
     });
     form.querySelectorAll('fieldset').forEach(function (input) {
       input.removeAttribute('disabled');
       if (!enable) {
         input.setAttribute('disabled', undefined);
+        form.removeEventListener('submit', onOrderSubmit);
       }
     });
   };
+
   var basketTemplate = document.querySelector('#card-order')
     .content.querySelector('.goods_card');
 
@@ -77,6 +92,7 @@
     } else {
       togglePayForm(form, false);
     }
+
     window.toggleClass(document.querySelector('.goods__card-empty'), (window.basketGoods.length > 0), 'visually-hidden');
     goodsInBasket = 0;
     var fragmentBasket = document.createDocumentFragment();
