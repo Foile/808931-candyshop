@@ -351,10 +351,10 @@ var onRangeFilterClick = function (evt) {
   var X = evt.clientX - rangeFilter.offsetLeft;
   var filterValue = calcFilterValue(X);
   if (X < minX + ((maxX - minX) / 2)) {
-    changePinPosition(priceRangeFilterLeft, X - 1.5 * pinWidth, minX, priceRangeFilterRight.offsetLeft);
+    changePinPosition(priceRangeFilterLeft, X - 0.5 * pinWidth, minX, priceRangeFilterRight.offsetLeft);
     filterMinPrice = filterValue;
   } else {
-    changePinPosition(priceRangeFilterRight, X - 1.5 * pinWidth, priceRangeFilterLeft.offsetLeft, maxX);
+    changePinPosition(priceRangeFilterRight, X - 0.5 * pinWidth, priceRangeFilterLeft.offsetLeft, maxX);
     filterMaxPrice = filterValue;
   }
   pinMoved = false;
