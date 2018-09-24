@@ -348,7 +348,7 @@ var onRangeFilterClick = function (evt) {
     pinMoved = false;
     return;
   }
-  var X = evt.clientX;
+  var X = evt.clientX - rangeFilter.offsetLeft;
   var filterValue = calcFilterValue(X);
   if (X < minX + ((maxX - minX) / 2)) {
     changePinPosition(priceRangeFilterLeft, X - 1.5 * pinWidth, minX, priceRangeFilterRight.offsetLeft);
