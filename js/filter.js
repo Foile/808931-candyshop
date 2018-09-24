@@ -14,7 +14,7 @@
   };
 
   var calcFilterPosition = function (value) {
-    return Math.round(maxX * value / window.TOTAL_MAX_PRICE);
+    return Math.round((maxX * value) / window.TOTAL_MAX_PRICE);
   };
 
   var changePinPosition = function (element, X, min, max) {
@@ -41,7 +41,7 @@
     updatePriceFilter();
   };
 
-  var initPriceFilter = function () {
+  window.initPriceFilter = function () {
     document.querySelector('.range__prices .range__price--min').textContent = window.MIN_PRICE;
     document.querySelector('.range__prices .range__price--max').textContent = window.MAX_PRICE;
     window.filterMinPrice = window.MIN_PRICE;
@@ -56,7 +56,7 @@
     document.querySelector('.range__prices .range__price--max').textContent = window.filterMaxPrice;
   };
 
-  initPriceFilter();
+  window.initPriceFilter();
 
   var minX = rangeFilter.clientLeft - priceRangeFilterRight.clientWidth / 2;
   var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth - priceRangeFilterRight.clientWidth / 2;
@@ -114,7 +114,7 @@
 
   document.querySelector('.catalog__submit').addEventListener('click', function (evt) {
     evt.preventDefault();
-    initPriceFilter();
+    window.initPriceFilter();
     window.renderCatalog();
   });
 })();
