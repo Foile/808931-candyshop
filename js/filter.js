@@ -46,7 +46,7 @@
     document.querySelector('.range__prices .range__price--max').textContent = window.MAX_PRICE;
     window.filterMinPrice = window.MIN_PRICE;
     window.filterMaxPrice = window.MAX_PRICE;
-    changePinPosition(priceRangeFilterLeft, calcFilterPosition(window.filterMinPrice));
+    changePinPosition(priceRangeFilterLeft, calcFilterPosition(window.filterMinPrice) - pinWidth / 2);
     changePinPosition(priceRangeFilterRight, calcFilterPosition(window.filterMaxPrice));
     priceFilterLineUpdate();
   };

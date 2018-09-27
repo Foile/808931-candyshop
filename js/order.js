@@ -48,6 +48,20 @@
     return card;
   };
 
+  var resetForm = function (form) {
+    // clearing inputs
+    form.querySelectorAll('input').forEach(function (input) {
+      switch (input.type) {
+        case 'radio':
+        case 'checkbox':
+          input.checked = false;
+          break;
+        default:
+          input.value = '';
+          break;
+      }
+    });
+  };
   var onOrderSubmit = function (evt) {
     var form = evt.target;
     evt.preventDefault();
@@ -55,7 +69,9 @@
     var onLoad = function () {
       var successModal = document.querySelector('.modal--success');
       window.showModal(successModal);
+      resetForm(form);
       window.init();
+
     };
     window.sendOrder(formData, onLoad, window.onError);
   };
@@ -63,25 +79,20 @@
   var togglePayForm = function (form, enable) {
     form.addEventListener('submit', onOrderSubmit);
     form.querySelectorAll('input').forEach(function (input) {
-      input.removeAttribute('disabled');
-      if (!enable) {
-        input.setAttribute('disabled', undefined);
-        form.removeEventListener('submit', onOrderSubmit);
-      }
+      input.disabled = !enable;
     });
     form.querySelectorAll('fieldset').forEach(function (input) {
-      input.removeAttribute('disabled');
-      if (!enable) {
-        input.setAttribute('disabled', undefined);
-        form.removeEventListener('submit', onOrderSubmit);
-      }
+      input.disabled = !enable;
     });
+    if (!enable) {
+      form.removeEventListener('submit', onOrderSubmit);
+    }
   };
 
   var basketTemplate = document.querySelector('#card-order')
     .content.querySelector('.goods_card');
 
-  window.window.renderBasket = function () {
+  window.renderBasket = function () {
     var basket = document.querySelector('.goods__cards');
     basket.querySelectorAll('.goods_card').forEach(function (child) {
       basket.removeChild(child);
@@ -131,26 +142,20 @@
     document.querySelector('.payment__card-wrap .payment__card-status').textContent = cardInput.valid ? 'Одобрен' : 'Неизвестен';
   });
 
-  var setFieldRequired = function (field, required) {
-    field.attributes.required = (!required) ? '' : 'required';
-  };
-  var togglePaymentType = function () {
+  var onPaymentTypeClick = function () {
     var isCard = document.querySelector('#payment__card').checked;
-    window.toggleClass(document.querySelector('.payment__card-wrap'), !isCard, 'visually-hidden');
-    window.toggleClass(document.querySelector('.payment__cash-wrap'), isCard, 'visually-hidden');
-    if (isCard) {
-      document.querySelector('.payment__card-group').childNodes.forEach(function (node) {
-        setFieldRequired(node, isCard);
-      });
-    }
+    document.querySelector('#payment__card-number').required = isCard;
+    document.querySelector('#payment__card-cvc').required = isCard;
+    document.querySelector('#payment__card-date').required = isCard;
+    document.querySelector('#payment__cardholder').required = isCard;
 
+    window.toggleClass(document.querySelector('.payment__card-wrap'), !isCard, 'visually-hidden');
+    window.toggleClass(document.querySelector('.payment__cash-wrap'), !document.querySelector('#payment__cash').checked, 'visually-hidden');
   };
 
 
   var paymentType = document.querySelector('.payment__method');
-  paymentType.addEventListener('click', function () {
-    togglePaymentType();
-  });
+  paymentType.addEventListener('click', onPaymentTypeClick);
 
   var deliverType = document.querySelector('.deliver__toggle');
   deliverType.addEventListener('click', function () {

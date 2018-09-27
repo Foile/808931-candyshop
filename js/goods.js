@@ -1,6 +1,5 @@
 'use strict';
 (function () {
-  // window.goods = window.generateRandomGoods(window.GOODS_COUNT);
   window.GOODS_COUNT = 26;
   window.TOTAL_MAX_PRICE = 1500;
   window.MAX_PRICE = 0;
