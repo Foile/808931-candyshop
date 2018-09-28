@@ -6,6 +6,7 @@
     el.textContent = txt;
     return el;
   };
+
   window.toggleClass = function (element, add, name) {
     if (!add) {
       element.classList.remove(name);
@@ -31,5 +32,19 @@
       sourceArray.splice(index, 1);
     }
     return resultArray;
+  };
+
+  window.toggleAttribute = function (element, attr, value, add) {
+    element.removeAttribute(attr);
+    if (add) {
+      element.setAttribute(attr, value);
+    }
+  };
+
+  window.showModal = function (modal) {
+    window.toggleClass(modal, false, 'modal--hidden');
+    modal.querySelector('.modal__close').addEventListener('click', function () {
+      modal.classList.add('modal--hidden');
+    });
   };
 })();

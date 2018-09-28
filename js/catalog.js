@@ -2,7 +2,7 @@
 (function () {
   window.goods = [];
   var STARS_CLASSES = ['stars__rating--one', 'stars__rating--two', 'stars__rating--three', 'stars__rating--four', 'stars__rating--five'];
-
+  window.picturePath = 'img/cards/';
   var renderCard = function (template, good) {
     var card = template.cloneNode(true);
     card.querySelector('.card__title').textContent = good.name;
@@ -12,7 +12,7 @@
     price.appendChild(window.newElement('span', 'card__currency', '₽'));
     price.appendChild(window.newElement('span', 'card__weight', '/ ' + good.weight + ' г' + ' / ' + good.amount + ' шт'));
     var img = card.querySelector('.card__img');
-    img.src = good.picture;
+    img.src = window.picturePath + good.picture;
     img.alt = good.name;
     if (good.amount > 5) {
       card.classList.add('card--in-stock');
