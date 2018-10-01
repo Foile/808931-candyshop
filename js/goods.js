@@ -26,8 +26,8 @@
     };
 
     window.loadCatalog(onCatalogLoaded, window.onError);
-    window.basketGoods = [];
-    window.renderBasket();
+    window.basket.goods = [];
+    window.basket.render();
   };
   window.init();
 })();

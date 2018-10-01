@@ -2,6 +2,13 @@
 (function () {
   window.goods = [];
   var STARS_CLASSES = ['stars__rating--one', 'stars__rating--two', 'stars__rating--three', 'stars__rating--four', 'stars__rating--five'];
+  /*  var starsMap = {
+      1: 'stars__rating--one',
+      2: 'stars__rating--two',
+      3: 'stars__rating--three',
+      4: 'stars__rating--four',
+      5: 'stars__rating--five'
+    };*/
   window.picturePath = 'img/cards/';
   var renderCard = function (template, good) {
     var card = template.cloneNode(true);
@@ -53,14 +60,9 @@
     if (good.amount > 0) {
       addToCartButton.addEventListener('click', function () {
         good.amount += -1;
-        if (window.basketGoods.indexOf(good) >= 0) {
-          window.basketGoods[window.basketGoods.indexOf(good)].count += 1;
-        } else {
-          window.basketGoods.push(good);
-          window.basketGoods[window.basketGoods.indexOf(good)].count = 1;
-        }
+        window.basket.add(good);
         window.renderCatalog();
-        window.renderBasket();
+        window.basket.render();
       });
     }
     return card;
