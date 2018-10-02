@@ -72,7 +72,18 @@
     catalog.classList.remove('catalog__cards--load');
     window.toggleClass(document.querySelector('.catalog__load'), true, 'visually-hidden');
     var fragment = document.createDocumentFragment();
-    var visibleGoods = window.goods.filter(window.priceFilter.filtrate);
+    var visibleGoods = window.goods.filter(function (good) {
+      var visilbe = true;
+      window.filterList.forEach(function (filter) {
+        visilbe = visilbe && filter.filtrate(good);
+      });
+      return visilbe;
+    });
+
+    if (visibleGoods.length <= 0) {
+      fragment.appendChild(document.querySelector('#empty-filters').cloneNode(true));
+    }
+
     visibleGoods.forEach(function (good) {
       fragment.appendChild(renderCard(cardTemplate, window.goods[window.goods.indexOf(good)]));
     });

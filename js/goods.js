@@ -15,11 +15,10 @@
         window.MAX_PRICE = element.price;
       }
     });
-    window.priceFilter.filterMin = window.MIN_PRICE;
-    window.priceFilter.filterMax = window.MAX_PRICE;
-    window.priceFilter.update();
+    window.resetFilters();
     window.renderCatalog();
   };
+
   window.init = function () {
     window.onError = function () {
       window.showModal(document.querySelector('.modal--error'));
