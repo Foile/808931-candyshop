@@ -15,9 +15,9 @@
         window.MAX_PRICE = element.price;
       }
     });
-    window.filterMinPrice = window.MIN_PRICE;
-    window.filterMaxPrice = window.MAX_PRICE;
-    window.initPriceFilter();
+    window.priceFilter.filterMin = window.MIN_PRICE;
+    window.priceFilter.filterMax = window.MAX_PRICE;
+    window.priceFilter.update();
     window.renderCatalog();
   };
   window.init = function () {

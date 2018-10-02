@@ -2,13 +2,6 @@
 (function () {
   window.goods = [];
   var STARS_CLASSES = ['stars__rating--one', 'stars__rating--two', 'stars__rating--three', 'stars__rating--four', 'stars__rating--five'];
-  /*  var starsMap = {
-      1: 'stars__rating--one',
-      2: 'stars__rating--two',
-      3: 'stars__rating--three',
-      4: 'stars__rating--four',
-      5: 'stars__rating--five'
-    };*/
   window.picturePath = 'img/cards/';
   var renderCard = function (template, good) {
     var card = template.cloneNode(true);
@@ -79,9 +72,7 @@
     catalog.classList.remove('catalog__cards--load');
     window.toggleClass(document.querySelector('.catalog__load'), true, 'visually-hidden');
     var fragment = document.createDocumentFragment();
-    var visibleGoods = window.goods.filter(function (good) {
-      return (good.price >= window.filterMinPrice) && (good.price <= window.filterMaxPrice);
-    });
+    var visibleGoods = window.goods.filter(window.priceFilter.filtrate);
     visibleGoods.forEach(function (good) {
       fragment.appendChild(renderCard(cardTemplate, window.goods[window.goods.indexOf(good)]));
     });

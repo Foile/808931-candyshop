@@ -16,7 +16,7 @@
     });
   };
   var renderCardOrder = function (template, good) {
-    if (good.count === 0) {
+    if (good.countInBasket === 0) {
       window.basket.delete(good);
     }
     var card = template.cloneNode(true);
@@ -25,12 +25,12 @@
     var img = card.querySelector('.card-order__img');
     img.src = window.picturePath + good.picture;
     img.alt = good.name;
-    card.querySelector('.card-order__count').value = good.count;
+    card.querySelector('.card-order__count').value = good.countInBasket;
     card.querySelector('.card-order__btn--decrease').addEventListener('click', function () {
-      good.count += -1;
+      good.countInBasket += -1;
       window.goods[window.goods.indexOf(good)].amount += 1;
-      card.querySelector('.card-order__count').value = good.count;
-      if (good.count === 0) {
+      card.querySelector('.card-order__count').value = good.countInBasket;
+      if (good.countInBasket === 0) {
         window.basket.delete(good);
       }
       if (good.amount > 0) {
@@ -40,10 +40,10 @@
     });
     if (window.goods[window.goods.indexOf(good)].amount > 0) {
       card.querySelector('.card-order__btn--increase').addEventListener('click', function () {
-        good.count += 1;
+        window.basket.add(good);
         window.goods[window.goods.indexOf(good)].amount += -1;
         window.renderCatalog();
-        card.querySelector('.card-order__count').value = good.count;
+        card.querySelector('.card-order__count').value = good.countInBasket;
         if (good.amount <= 0) {
           window.basket.render();
         }
@@ -89,10 +89,10 @@
     goods: [],
     add: function (good) {
       if (this.goods.indexOf(good) >= 0) {
-        this.goods[this.goods.indexOf(good)].count += 1;
+        this.goods[this.goods.indexOf(good)].countInBasket += 1;
       } else {
         this.goods.push(good);
-        this.goods[this.goods.indexOf(good)].count = 1;
+        this.goods[this.goods.indexOf(good)].countInBasket = 1;
       }
       this.render();
     },
@@ -113,27 +113,29 @@
         togglePayForm(form, false);
       }
 
-      window.toggleClass(document.querySelector('.goods__card-empty'), (window.basket.goods.length > 0), 'visually-hidden');
       var fragmentBasket = document.createDocumentFragment();
       window.basket.goods.forEach(function (good) {
         fragmentBasket.appendChild(renderCardOrder(basketTemplate, good));
       });
       basket.appendChild(fragmentBasket);
       var count = this.getCount();
-
+      this.updateBasketTopElement();
       document.querySelector('.main-header__basket').textContent = (count > 0) ? count : 'В корзине ничего нет';
     },
     getCount: function () {
       return this.goods.map(function (good) {
-        return good.count;
+        return good.countInBasket;
       }).reduce(function (a, b) {
-        return a.count + b.count;
+        return a + b;
       }, 0);
     },
     getBasketPrice: function () {
       return this.goods.reduce(function (a, b) {
         return a.price + b.price;
       }, 0);
+    },
+    updateBasketTopElement: function () {
+      window.toggleClass(document.querySelector('.goods__card-empty'), (this.getCount() > 0), 'visually-hidden');
     }
   };
 })();
