@@ -5,6 +5,7 @@
   };
   Filter.prototype._create = function () {
     this.active = false;
+    this.matches = 0;
     this.filtrate = function () {
       return true;
     };
@@ -14,44 +15,130 @@
     };
   };
 
-  var TypeFilter = function (name) {
-    Filter.apply(this, arguments);
-    this.name = name;
-  };
-
-  TypeFilter.prototype = Object.create(Filter.prototype);
-
   var getTypeFilterValue = function (control) {
     return control.parentNode.querySelector('label').textContent;
   };
-
-  TypeFilter.prototype._create = function () {
-
+  var TypeFilter = function (name) {
+    Filter.apply(this, arguments);
+    this.name = name;
     this.active = false;
+    this.filterElementsSelector = function (elName) {
+      return '.catalog__filter > li > input[name^="' + elName + '"]';
+    };
+    this.isMatch = function (good, filter) {
+      return good.kind === getTypeFilterValue(filter);
+    };
 
     this.resetFilter = function () {
-      document.querySelectorAll('.catalog__filter > li > input[name^="' + this.name + '"]').forEach(function (element) {
+      document.querySelectorAll(this.filterElementsSelector(this.name)).forEach(function (element) {
         element.checked = false;
       });
     };
 
     this.updateFilter = function () {
-      this.active = (document.querySelector('.catalog__filter > li > input[name^="' + this.name + '"]:checked'));
+      this.active = (document.querySelector(this.filterElementsSelector(this.name) + ':checked') && true);
     };
 
     this.filtrate = function (good) {
       var match = !this.active;
-      document.querySelectorAll('.catalog__filter > li > input[name^="' + this.name + '"]:checked').forEach(function (filter) {
-        match = match || (good.kind === getTypeFilterValue(filter));
-      });
+      document.querySelectorAll(this.filterElementsSelector(this.name) + ':checked').forEach(function (filter) {
+        match = match || this.isMatch(good, filter);
+      }, this);
       return match;
     };
   };
 
+  TypeFilter.prototype = Object.create(Filter.prototype);
+
+  var PropertyFilter = function () {
+    TypeFilter.apply(this, arguments);
+    this.name = 'food-property';
+    this.isMatch = function (good, filter) {
+      var fact = filter.value;
+      var match = true;
+      switch (fact) {
+        case 'gluten-free': match = !good.nutritionFacts.gluten; break;
+        case 'sugar-free': match = !good.nutritionFacts.sugar; break;
+        case 'vegetarian': match = good.nutritionFacts.vegetarian; break;
+      }
+      return match;
+    };
+    this.filtrate = function (good) {
+      var match = true;
+      var filterFacts = [];
+      document.querySelectorAll(this.filterElementsSelector(this.name) + ':checked').forEach(function (filter) {
+        filterFacts.push(filter);
+      });
+      filterFacts.forEach(function (filter) {
+        match = match && this.isMatch(good, filter);
+      }, this);
+      return match;
+    };
+  };
+
+  PropertyFilter.prototype = Object.create(TypeFilter.prototype);
+
+  var MarkFilter = function () {
+    TypeFilter.apply(this, arguments);
+    this.name = 'mark';
+    this.isMatch = function (good, filter) {
+      var mark = filter.value;
+      var match = true;
+      switch (mark) {
+        case 'favorite': match = match && good.isFavorite; break;
+        case 'availability': match = match && good.inStock; break;
+      }
+      return match;
+    };
+    this.filtrate = function (good) {
+      var match = true;
+      document.querySelectorAll(this.filterElementsSelector(this.name) + ':checked').forEach(function (filter) {
+        match = match && this.isMatch(good, filter);
+      }, this);
+      return match;
+    };
+  };
+
+  MarkFilter.prototype = Object.create(TypeFilter.prototype);
+
+
   var PriceFilter = function () {
     Filter.apply(this, arguments);
     this.name = 'price';
+    this.active = true;
+    this.filterMin = window.MIN_PRICE;
+    this.filterMax = window.MAX_PRICE;
+    this.rangeFilter = document.querySelector('.range__filter');
+    this.pinLeft = this.rangeFilter.querySelector('.range__btn--left');
+    this.pinRight = this.rangeFilter.querySelector('.range__btn--right');
+    this.filterLine = this.rangeFilter.querySelector('.range__fill-line');
+    this.pinWidth = this.pinRight.clientWidth;
+    this.minX = this.rangeFilter.clientLeft - this.pinRight.clientWidth / 2;
+    this.maxX = this.rangeFilter.clientLeft + this.rangeFilter.clientWidth - this.pinRight.clientWidth / 2;
+    this.filterElementsSelector = function () {
+      return '.range__prices';
+    };
+    this.isMatch = function (good) {
+      return (good.price >= priceFilter.filterMin) && (good.price <= priceFilter.filterMax);
+    };
+    this.filtrate = function (good) {
+      return this.isMatch(good);
+    };
+    this.resetFilter = function () {
+      this.rangeFilter.addEventListener('click', onRangeFilterClick);
+      this.pinRight.addEventListener('mousedown', onFilterPinMouseDown);
+      this.pinLeft.addEventListener('mousedown', onFilterPinMouseDown);
+      this.pinMoved = false;
+      document.querySelector('.range__prices .range__price--min').textContent = window.MIN_PRICE;
+      document.querySelector('.range__prices .range__price--max').textContent = window.MAX_PRICE;
+      this.filterMin = window.MIN_PRICE;
+      this.filterMax = window.MAX_PRICE;
+      changePinPosition(this.pinLeft, this.calcFilterPosition(this.filterMin) - this.pinWidth / 2);
+      changePinPosition(this.pinRight, this.calcFilterPosition(this.filterMax));
+      this.lineUpdate();
+    };
   };
+
   PriceFilter.prototype = Object.create(Filter.prototype);
 
   var onRangeFilterClick = function (evt) {
@@ -80,7 +167,6 @@
   };
 
   var onMouseUp = function (upEvt) {
-    pinMovedOff();
     window.renderCatalog();
     upEvt.preventDefault();
     document.removeEventListener('mousemove', onMouseMove);
@@ -97,37 +183,6 @@
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  PriceFilter.prototype._create = function () {
-    this.active = true;
-    this.filterMin = window.MIN_PRICE;
-    this.filterMax = window.MAX_PRICE;
-    this.rangeFilter = document.querySelector('.range__filter');
-    this.pinLeft = this.rangeFilter.querySelector('.range__btn--left');
-    this.pinRight = this.rangeFilter.querySelector('.range__btn--right');
-    this.filterLine = this.rangeFilter.querySelector('.range__fill-line');
-    this.pinWidth = this.pinRight.clientWidth;
-    this.minX = this.rangeFilter.clientLeft - this.pinRight.clientWidth / 2;
-    this.maxX = this.rangeFilter.clientLeft + this.rangeFilter.clientWidth - this.pinRight.clientWidth / 2;
-    this.updateFilter = function () {
-    };
-    this.filtrate = function (good) {
-      return (good.price >= priceFilter.filterMin) && (good.price <= priceFilter.filterMax);
-    };
-  };
-
-  PriceFilter.prototype.resetFilter = function () {
-    this.rangeFilter.addEventListener('click', onRangeFilterClick);
-    this.pinRight.addEventListener('mousedown', onFilterPinMouseDown);
-    this.pinLeft.addEventListener('mousedown', onFilterPinMouseDown);
-    this.pinMoved = false;
-    document.querySelector('.range__prices .range__price--min').textContent = window.MIN_PRICE;
-    document.querySelector('.range__prices .range__price--max').textContent = window.MAX_PRICE;
-    this.filterMin = window.MIN_PRICE;
-    this.filterMax = window.MAX_PRICE;
-    changePinPosition(this.pinLeft, this.calcFilterPosition(this.filterMin) - this.pinWidth / 2);
-    changePinPosition(this.pinRight, this.calcFilterPosition(this.filterMax));
-    this.lineUpdate();
-  };
   PriceFilter.prototype.calcFilterValue = function (pos) {
     pos += this.pinWidth / 2;
     return Math.round((window.TOTAL_MAX_PRICE * pos) / this.rangeFilter.clientWidth);
@@ -186,7 +241,8 @@
   window.filterList = [
     priceFilter,
     new TypeFilter('food-type'),
-    new TypeFilter('food-property')
+    new PropertyFilter('food-property'),
+    new MarkFilter('mark')
     // new TypeFilter('mark'),
     // new TypeFilter('sort'),
     // new TypeFilter('food-type')
@@ -215,5 +271,24 @@
       window.renderCatalog();
     });
   });
+
+  var updateFilterMatchesCountElement = function (element, count) {
+    element.parentNode.querySelector('span').textContent = '(' + count + ')';
+  };
+
+  window.filterRenderStat = function () {
+    window.filterList.forEach(function (filter) {
+      if (filter.name === 'price') {
+        return;
+      }
+      document.querySelectorAll(filter.filterElementsSelector(filter.name)).forEach(function (element) {
+        filter.matches = 0;
+        window.goods.forEach(function (good) {
+          filter.matches += (filter.isMatch(good, element) ? 1 : 0);
+        });
+        updateFilterMatchesCountElement(element, filter.matches);
+      });
+    });
+  };
 
 })();

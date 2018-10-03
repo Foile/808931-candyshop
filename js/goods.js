@@ -4,6 +4,7 @@
   window.TOTAL_MAX_PRICE = 1500;
   window.MAX_PRICE = 0;
   window.MIN_PRICE = 1500;
+
   var onCatalogLoaded = function (data) {
     window.goods = data;
     window.GOODS_COUNT = data.length;
@@ -14,9 +15,12 @@
       if (element.price > window.MAX_PRICE) {
         window.MAX_PRICE = element.price;
       }
+      element.isFavorite = false;
+      element.inStock = element.amount > 0;
     });
     window.resetFilters();
     window.renderCatalog();
+    window.filterRenderStat();
   };
 
   window.init = function () {
