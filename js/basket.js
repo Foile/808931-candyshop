@@ -2,7 +2,6 @@
 (function () {
 
   var resetForm = function (form) {
-    // clearing inputs
     form.querySelectorAll('input').forEach(function (input) {
       switch (input.type) {
         case 'radio':
@@ -15,6 +14,7 @@
       }
     });
   };
+
   var renderCardOrder = function (template, good) {
     if (good.countInBasket === 0) {
       window.basket.delete(good);
@@ -118,9 +118,7 @@
         fragmentBasket.appendChild(renderCardOrder(basketTemplate, good));
       });
       basket.appendChild(fragmentBasket);
-      var count = this.getCount();
-      this.updateBasketTopElement();
-      document.querySelector('.main-header__basket').textContent = (count > 0) ? count : 'В корзине ничего нет';
+      this.updateBasketInfo();
     },
     getCount: function () {
       return this.goods.map(function (good) {
@@ -130,12 +128,24 @@
       }, 0);
     },
     getBasketPrice: function () {
-      return this.goods.reduce(function (a, b) {
-        return a.price + b.price;
+      return this.goods.map(function (good) {
+        return good.price * good.countInBasket;
+      }).reduce(function (a, b) {
+        return a + b;
       }, 0);
     },
-    updateBasketTopElement: function () {
-      window.toggleClass(document.querySelector('.goods__card-empty'), (this.getCount() > 0), 'visually-hidden');
+    updateBasketInfo: function () {
+      var count = this.getCount();
+      document.querySelector('.main-header__basket').textContent = (count > 0) ? count : 'В корзине ничего нет';
+      window.toggleClass(document.querySelector('.goods__card-empty'), (count > 0), 'visually-hidden');
+      var total = document.querySelector('.goods__total');
+      window.toggleClass(total, (count <= 0), 'visually-hidden');
+      window.toggleClass(total.querySelector('.goods__order-link'), (count <= 0), 'goods__order-link--disabled');
+      var totalInfo = total.querySelector('.goods__total-count');
+      totalInfo.textContent = '';
+      totalInfo.appendChild(window.newElement('span', undefined, 'Итого за ' + count + ' товаров:'));
+      totalInfo.appendChild(window.newElement('span', 'goods__price', this.getBasketPrice()));
+      totalInfo.appendChild(window.newElement('span', 'goods__price', '₽'));
     }
   };
 })();

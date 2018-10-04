@@ -4,6 +4,7 @@
     this._create();
   };
   Filter.prototype._create = function () {
+    this.filtersToReset = [];
     this.active = false;
     this.matches = 0;
     this.filtrate = function () {
@@ -13,15 +14,32 @@
     };
     this.updateFilter = function () {
     };
+    this.filterElementsSelector = function () {
+      return '';
+    };
+    this.getFilterStat = function () {
+
+      var element = document.querySelector(this.filterElementsSelector(this.name));
+      this.matches = 0;
+      window.goods.forEach(function (good) {
+        this.matches += (this.isMatch(good, element) ? 1 : 0);
+      }, this);
+      element.parentNode.querySelector('.range__price-count > span').textContent = '(' + this.matches + ')';
+    };
   };
 
   var getTypeFilterValue = function (control) {
     return control.parentNode.querySelector('label').textContent;
   };
+  var updateFilterMatchesCountElement = function (element, count) {
+    element.parentNode.querySelector('span').textContent = '(' + count + ')';
+  };
+
   var TypeFilter = function (name) {
     Filter.apply(this, arguments);
     this.name = name;
     this.active = false;
+    this.filtersToReset = ['mark'];
     this.filterElementsSelector = function (elName) {
       return '.catalog__filter > li > input[name^="' + elName + '"]';
     };
@@ -37,6 +55,15 @@
 
     this.updateFilter = function () {
       this.active = (document.querySelector(this.filterElementsSelector(this.name) + ':checked') && true);
+      if (this.active && (this.filtersToReset.length > 0)) {
+        window.filterList.forEach(function (filterToReset) {
+          this.filtersToReset.forEach(function (resetName) {
+            if ((resetName === 'all' && filterToReset.name !== this.name) || (filterToReset.name === resetName)) {
+              filterToReset.resetFilter();
+            }
+          }, this);
+        }, this);
+      }
     };
 
     this.filtrate = function (good) {
@@ -45,6 +72,15 @@
         match = match || this.isMatch(good, filter);
       }, this);
       return match;
+    };
+    this.getFilterStat = function () {
+      document.querySelectorAll(this.filterElementsSelector(this.name)).forEach(function (element) {
+        this.matches = 0;
+        window.goods.forEach(function (good) {
+          this.matches += (this.isMatch(good, element) ? 1 : 0);
+        }, this);
+        updateFilterMatchesCountElement(element, this.matches);
+      }, this);
     };
   };
 
@@ -80,6 +116,7 @@
 
   var MarkFilter = function () {
     TypeFilter.apply(this, arguments);
+    this.filtersToReset = ['all'];
     this.name = 'mark';
     this.isMatch = function (good, filter) {
       var mark = filter.value;
@@ -203,6 +240,7 @@
   PriceFilter.prototype.updateValue = function () {
     document.querySelector('.range__prices .range__price--min').textContent = this.filterMin;
     document.querySelector('.range__prices .range__price--max').textContent = this.filterMax;
+    this.getFilterStat();
   };
 
   PriceFilter.prototype.lineUpdate = function () {
@@ -240,12 +278,9 @@
 
   window.filterList = [
     priceFilter,
+    new MarkFilter('mark'),
     new TypeFilter('food-type'),
-    new PropertyFilter('food-property'),
-    new MarkFilter('mark')
-    // new TypeFilter('mark'),
-    // new TypeFilter('sort'),
-    // new TypeFilter('food-type')
+    new PropertyFilter('food-property')
   ];
 
   window.resetFilters = function () {
@@ -253,42 +288,53 @@
       filter.resetFilter();
     });
   };
+
   window.updateFilters = function () {
     window.filterList.forEach(function (filter) {
       filter.updateFilter();
     });
   };
 
-  document.querySelector('.catalog__submit').addEventListener('click', function (evt) {
+  window.onFilterResetAll = function (evt) {
     evt.preventDefault();
     window.resetFilters();
     window.renderCatalog();
-  });
+  };
+
+  document.querySelector('.catalog__submit').addEventListener('click', window.onFilterResetAll);
 
   document.querySelectorAll('.catalog__filter > li > input').forEach(function (element) {
-    element.addEventListener('change', function () {
+    element.addEventListener('change', function (evt) {
+      if ((evt.target.name === 'mark') && evt.target.checked) {
+        var otherElements = element.parentNode.parentNode.querySelectorAll('input[name="' + evt.target.name + '"]:checked');
+        otherElements.forEach(function (el) {
+          el.checked = el.value === evt.target.value;
+        });
+      }
+      var oneFilter = window.filterList.find(function (filter) {
+        return filter.name === evt.target.name;
+      });
+      if (oneFilter) {
+        oneFilter.updateFilter();
+      }
       window.updateFilters();
       window.renderCatalog();
     });
   });
 
-  var updateFilterMatchesCountElement = function (element, count) {
-    element.parentNode.querySelector('span').textContent = '(' + count + ')';
-  };
-
-  window.filterRenderStat = function () {
-    window.filterList.forEach(function (filter) {
-      if (filter.name === 'price') {
-        return;
-      }
-      document.querySelectorAll(filter.filterElementsSelector(filter.name)).forEach(function (element) {
-        filter.matches = 0;
-        window.goods.forEach(function (good) {
-          filter.matches += (filter.isMatch(good, element) ? 1 : 0);
-        });
-        updateFilterMatchesCountElement(element, filter.matches);
+  window.filterRenderStat = function (name) {
+    if (name === undefined) {
+      window.filterList.forEach(function (filter) {
+        filter.getFilterStat();
       });
-    });
+    } else {
+      var oneFilter = window.filterList.find(function (filter) {
+        return filter.name === name;
+      });
+      if (oneFilter) {
+        oneFilter.getFilterStat();
+      }
+    }
   };
 
 })();

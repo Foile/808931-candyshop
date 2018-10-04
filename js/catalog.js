@@ -3,6 +3,7 @@
   window.goods = [];
   var STARS_CLASSES = ['stars__rating--one', 'stars__rating--two', 'stars__rating--three', 'stars__rating--four', 'stars__rating--five'];
   window.picturePath = 'img/cards/';
+
   var renderCard = function (template, good) {
     var card = template.cloneNode(true);
     card.querySelector('.card__title').textContent = good.name;
@@ -20,7 +21,7 @@
     if (good.amount <= 0) {
       card.classList.add('card--soon');
     }
-    if (good.amount > 0 && good.amount <= 5) {
+    if (good.inStock && good.amount <= 5) {
       card.classList.add('card--little');
     }
     var stars = card.querySelector('.stars__rating');
@@ -43,11 +44,13 @@
     });
 
     var favoriteButton = card.querySelector('.card__btn-favorite');
-    window.toggleClass(favoriteButton, good.isFavorite, '.card__btn-favorite--selected');
+    window.toggleClass(favoriteButton, good.isFavorite, 'card__btn-favorite--selected');
+
     favoriteButton.addEventListener('click', function (evt) {
       evt.preventDefault();
       good.isFavorite = !good.isFavorite;
-      window.toggleClass(favoriteButton, good.isFavorite, '.card__btn-favorite--selected');
+      window.toggleClass(favoriteButton, good.isFavorite, 'card__btn-favorite--selected');
+      window.filterRenderStat('mark');
     });
 
     var addToCartButton = card.querySelector('.card__btn');
@@ -68,7 +71,7 @@
   var emptyFiltersTemplate = document.querySelector('#empty-filters')
     .content.querySelector('.catalog__empty-filter');
 
-  window.renderCatalog = function () {
+  var renderCatalogBase = function () {
     var catalog = document.querySelector('.catalog__cards');
     catalog.querySelectorAll('.catalog__card').forEach(function (child) {
       catalog.removeChild(child);
@@ -92,9 +95,13 @@
       catalog.removeChild(child);
     }
     if (visibleGoods.length === 0) {
+      var emptyFilter = emptyFiltersTemplate.cloneNode(true);
+      emptyFilter.querySelector('catalog__show-all').addEventListener('click', window.onFilterResetAll);
       catalog.appendChild(emptyFiltersTemplate.cloneNode(true));
     }
 
     catalog.appendChild(fragment);
   };
+
+  window.renderCatalog = window.debounce(renderCatalogBase);
 })();
