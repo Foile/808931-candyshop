@@ -96,7 +96,7 @@
     }
     if (visibleGoods.length === 0) {
       var emptyFilter = emptyFiltersTemplate.cloneNode(true);
-      emptyFilter.querySelector('catalog__show-all').addEventListener('click', window.onFilterResetAll);
+      emptyFilter.querySelector('.catalog__show-all').addEventListener('click', window.onFilterResetAll);
       catalog.appendChild(emptyFiltersTemplate.cloneNode(true));
     }
 
