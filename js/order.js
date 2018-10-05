@@ -69,8 +69,13 @@
 
   var deliverType = document.querySelector('.deliver__toggle');
   deliverType.addEventListener('click', function () {
+    var isCourier = document.querySelector('#deliver__courier').checked;
+    document.querySelector('#deliver__street').required = isCourier;
+    document.querySelector('#deliver__house').required = isCourier;
+    document.querySelector('#deliver__room').required = isCourier;
+
     window.toggleClass(document.querySelector('.deliver__store'), !document.querySelector('#deliver__store').checked, 'visually-hidden');
-    window.toggleClass(document.querySelector('.deliver__courier'), !document.querySelector('#deliver__courier').checked, 'visually-hidden');
+    window.toggleClass(document.querySelector('.deliver__courier'), !isCourier, 'visually-hidden');
   });
 
   var updateMap = function (name, img) {

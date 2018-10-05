@@ -386,22 +386,26 @@
 
                 <ul class="deliver__address-entry-fields">
                   <li class="text-input deliver__street">
-                    <input type="text" class="text-input__input" name="deliver-street" id="deliver__street" placeholder="Улица">
+                    <input type="text" class="text-input__input" name="deliver-street" id="deliver__street" placeholder="Улица"
+                      required>
                     <label class="text-input__label" for="deliver__street">Улица</label>
                   </li>
 
                   <li class="text-input deliver__house">
-                    <input type="text" class="text-input__input" name="deliver-house" id="deliver__house" placeholder="Дом">
+                    <input type="text" class="text-input__input" name="deliver-house" id="deliver__house" placeholder="Дом"
+                      required>
                     <label class="text-input__label" for="deliver__house">Дом</label>
                   </li>
 
                   <li class="text-input deliver__floor">
-                    <input type="text" class="text-input__input" name="deliver-floor" id="deliver__floor" placeholder="Эт.">
+                    <input type="number" class="text-input__input" name="deliver-floor" id="deliver__floor" placeholder="Эт."
+                      max="163">
                     <label class="text-input__label" for="deliver__floor">Эт.</label>
                   </li>
 
                   <li class="text-input deliver__room">
-                    <input type="text" class="text-input__input" name="deliver-room" id="deliver__room" placeholder="Кв.">
+                    <input type="text" class="text-input__input" name="deliver-room" id="deliver__room" placeholder="Кв."
+                      required>
                     <label class="text-input__label" for="deliver__room">Кв.</label>
                   </li>
                 </ul>

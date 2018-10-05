@@ -44,7 +44,12 @@
   window.showModal = function (modal) {
     window.toggleClass(modal, false, 'modal--hidden');
     modal.querySelector('.modal__close').addEventListener('click', function () {
-      modal.classList.add('modal--hidden');
+      window.toggleClass(modal, true, 'modal--hidden');
+    });
+    modal.addEventListener('keydown', function (evt) {
+      if (evt.keyCode === 27) {
+        window.toggleClass(modal, true, 'modal--hidden');
+      }
     });
   };
 })();

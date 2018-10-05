@@ -72,6 +72,7 @@
 
   var basketTemplate = document.querySelector('#card-order')
     .content.querySelector('.goods_card');
+
   var togglePayForm = function (form, enable) {
     form.addEventListener('submit', onOrderSubmit);
     form.querySelectorAll('input').forEach(function (input) {
@@ -106,8 +107,8 @@
         basket.removeChild(child);
       });
       var form = document.querySelector('.buy form');
+      window.toggleClass(basket, (window.basket.goods.length <= 0), 'goods__cards--empty');
       if (window.basket.goods.length > 0) {
-        basket.classList.remove('goods__cards--empty');
         togglePayForm(form, true);
       } else {
         togglePayForm(form, false);
