@@ -7,8 +7,11 @@
     this.filtersToReset = [];
     this.active = false;
     this.matches = 0;
-    this.filtrate = function () {
+    this.isMatch = function () {
       return true;
+    };
+    this.filtrate = function (good) {
+      return this.isMatch(good);
     };
     this.resetFilter = function () {
     };
@@ -18,7 +21,6 @@
       return '';
     };
     this.getFilterStat = function () {
-
       var element = document.querySelector(this.filterElementsSelector(this.name));
       this.matches = 0;
       window.goods.forEach(function (good) {
@@ -158,9 +160,6 @@
     this.isMatch = function (good) {
       return (good.price >= priceFilter.filterMin) && (good.price <= priceFilter.filterMax);
     };
-    this.filtrate = function (good) {
-      return this.isMatch(good);
-    };
     this.resetFilter = function () {
       this.rangeFilter.addEventListener('click', onRangeFilterClick);
       this.pinRight.addEventListener('mousedown', onFilterPinMouseDown);
@@ -282,6 +281,36 @@
     new TypeFilter('food-type'),
     new PropertyFilter('food-property')
   ];
+
+  window.sorting = {
+    name: 'sort',
+    sort: function (good1, good2) {
+      var res = this.getActiveSort(good1, good2);
+      return res;
+    },
+    getActiveSort: function (good1, good2) {
+      var activeSort = 'popular';
+      var filter = document.querySelector('.catalog__filter > li > input[name^="' + this.name + '"]:checked');
+      if (filter) {
+        activeSort = filter.value;
+      }
+      return this.sortType[activeSort](good1, good2);
+    },
+    sortType: {
+      popular: function () {
+        return 0;
+      },
+      expensive: function (good1, good2) {
+        return good2.price - good1.price;
+      },
+      cheep: function (good1, good2) {
+        return good1.price - good2.price;
+      },
+      rating: function (good1, good2) {
+        return (good2.rating.value * window.MAX_RATING_NUMBER + good2.rating.number) - (good1.rating.value * window.MAX_RATING_NUMBER + good1.rating.number);
+      }
+    }
+  };
 
   window.resetFilters = function () {
     window.filterList.forEach(function (filter) {

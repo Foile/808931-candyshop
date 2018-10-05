@@ -4,6 +4,7 @@
   window.TOTAL_MAX_PRICE = 1500;
   window.MAX_PRICE = 0;
   window.MIN_PRICE = 1500;
+  window.MAX_RATING_NUMBER = 100;
 
   var onCatalogLoaded = function (data) {
     window.goods = data;
@@ -17,6 +18,10 @@
       }
       element.isFavorite = false;
       element.inStock = element.amount > 0;
+      if (element.rating.number > window.MAX_RATING_NUMBER) {
+        window.MAX_RATING_NUMBER = element.rating.number;
+      }
+
     });
     window.resetFilters();
     window.renderCatalog();

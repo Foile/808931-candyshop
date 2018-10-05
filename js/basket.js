@@ -66,10 +66,10 @@
       window.showModal(successModal);
       resetForm(form);
       window.init();
-
     };
     window.sendOrder(formData, onLoad, window.onError);
   };
+
   var basketTemplate = document.querySelector('#card-order')
     .content.querySelector('.goods_card');
   var togglePayForm = function (form, enable) {

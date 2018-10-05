@@ -87,6 +87,9 @@
       });
       return visilbe;
     });
+    visibleGoods.sort(function (good1, good2) {
+      return window.sorting.sort(good1, good2);
+    });
     visibleGoods.forEach(function (good) {
       fragment.appendChild(renderCard(cardTemplate, good));
     });
