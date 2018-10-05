@@ -94,7 +94,6 @@
 
   var onOrderSubmit = function (evt) {
     var form = evt.target;
-    evt.preventDefault();
     var formData = new FormData(form);
     var onLoad = function () {
       var successModal = document.querySelector('.modal--success');
@@ -105,18 +104,22 @@
     window.sendOrder(formData, onLoad, window.onError);
   };
 
-  window.togglePayForm = function (form, enable) {
-    form.addEventListener('submit', onOrderSubmit);
+  var buyForm = document.querySelector('.buy form');
+  buyForm.addEventListener('submit', function (evt) {
+    evt.preventDefault();
+  });
+  window.togglePayForm = function (enable) {
+    buyForm.addEventListener('submit', onOrderSubmit);
     deliverType.addEventListener('click', onDeliverTypeClick);
     paymentType.addEventListener('click', onPaymentTypeClick);
-    form.querySelectorAll('input').forEach(function (input) {
+    buyForm.querySelectorAll('input').forEach(function (input) {
       input.disabled = !enable;
     });
-    form.querySelectorAll('fieldset').forEach(function (input) {
+    buyForm.querySelectorAll('fieldset').forEach(function (input) {
       input.disabled = !enable;
     });
     if (!enable) {
-      form.removeEventListener('submit', onOrderSubmit);
+      buyForm.removeEventListener('submit', onOrderSubmit);
     }
   };
 

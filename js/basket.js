@@ -66,12 +66,11 @@
       basket.querySelectorAll('.goods_card').forEach(function (child) {
         basket.removeChild(child);
       });
-      var form = document.querySelector('.buy form');
       window.toggleClass(basket, (window.basket.goods.length <= 0), 'goods__cards--empty');
       if (window.basket.goods.length > 0) {
-        window.togglePayForm(form, true);
+        window.togglePayForm(true);
       } else {
-        window.togglePayForm(form, false);
+        window.togglePayForm(false);
       }
 
       var fragmentBasket = document.createDocumentFragment();
