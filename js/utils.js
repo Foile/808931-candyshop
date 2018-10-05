@@ -1,5 +1,6 @@
 'use strict';
 (function () {
+  var CODE_ESC = 27;
   window.newElement = function (type, cls, txt) {
     var el = document.createElement(type);
     el.classList.add(cls);
@@ -42,14 +43,16 @@
   };
 
   window.showModal = function (modal) {
+    var onEscModalClose = function (evt) {
+      if (evt.keyCode === CODE_ESC) {
+        window.toggleClass(modal, true, 'modal--hidden');
+      }
+    };
     window.toggleClass(modal, false, 'modal--hidden');
     modal.querySelector('.modal__close').addEventListener('click', function () {
       window.toggleClass(modal, true, 'modal--hidden');
+      document.removeEventListener('keydown', onEscModalClose);
     });
-    modal.addEventListener('keydown', function (evt) {
-      if (evt.keyCode === 27) {
-        window.toggleClass(modal, true, 'modal--hidden');
-      }
-    });
+    document.addEventListener('keydown', onEscModalClose);
   };
 })();

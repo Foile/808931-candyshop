@@ -1,20 +1,6 @@
 'use strict';
 (function () {
 
-  var resetForm = function (form) {
-    form.querySelectorAll('input').forEach(function (input) {
-      switch (input.type) {
-        case 'radio':
-        case 'checkbox':
-          input.checked = false;
-          break;
-        default:
-          input.value = '';
-          break;
-      }
-    });
-  };
-
   var renderCardOrder = function (template, good) {
     if (good.countInBasket === 0) {
       window.basket.delete(good);
@@ -57,34 +43,8 @@
     return card;
   };
 
-  var onOrderSubmit = function (evt) {
-    var form = evt.target;
-    evt.preventDefault();
-    var formData = new FormData(form);
-    var onLoad = function () {
-      var successModal = document.querySelector('.modal--success');
-      window.showModal(successModal);
-      resetForm(form);
-      window.init();
-    };
-    window.sendOrder(formData, onLoad, window.onError);
-  };
-
   var basketTemplate = document.querySelector('#card-order')
     .content.querySelector('.goods_card');
-
-  var togglePayForm = function (form, enable) {
-    form.addEventListener('submit', onOrderSubmit);
-    form.querySelectorAll('input').forEach(function (input) {
-      input.disabled = !enable;
-    });
-    form.querySelectorAll('fieldset').forEach(function (input) {
-      input.disabled = !enable;
-    });
-    if (!enable) {
-      form.removeEventListener('submit', onOrderSubmit);
-    }
-  };
 
   window.basket = {
     goods: [],
@@ -109,9 +69,9 @@
       var form = document.querySelector('.buy form');
       window.toggleClass(basket, (window.basket.goods.length <= 0), 'goods__cards--empty');
       if (window.basket.goods.length > 0) {
-        togglePayForm(form, true);
+        window.togglePayForm(form, true);
       } else {
-        togglePayForm(form, false);
+        window.togglePayForm(form, false);
       }
 
       var fragmentBasket = document.createDocumentFragment();

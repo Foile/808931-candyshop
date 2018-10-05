@@ -63,12 +63,7 @@
     window.toggleClass(document.querySelector('.payment__cash-wrap'), !document.querySelector('#payment__cash').checked, 'visually-hidden');
   };
 
-
-  var paymentType = document.querySelector('.payment__method');
-  paymentType.addEventListener('click', onPaymentTypeClick);
-
-  var deliverType = document.querySelector('.deliver__toggle');
-  deliverType.addEventListener('click', function () {
+  var onDeliverTypeClick = function () {
     var isCourier = document.querySelector('#deliver__courier').checked;
     document.querySelector('#deliver__street').required = isCourier;
     document.querySelector('#deliver__house').required = isCourier;
@@ -76,7 +71,54 @@
 
     window.toggleClass(document.querySelector('.deliver__store'), !document.querySelector('#deliver__store').checked, 'visually-hidden');
     window.toggleClass(document.querySelector('.deliver__courier'), !isCourier, 'visually-hidden');
-  });
+  };
+
+  var paymentType = document.querySelector('.payment__method');
+  var deliverType = document.querySelector('.deliver__toggle');
+
+  var resetForm = function (form) {
+    form.querySelectorAll('input').forEach(function (input) {
+      switch (input.type) {
+        case 'radio':
+        case 'checkbox':
+          input.checked = false;
+          break;
+        default:
+          input.value = '';
+          break;
+      }
+    });
+    paymentType.removeEventListener('click', onPaymentTypeClick);
+    deliverType.removeEventListener('click', onDeliverTypeClick);
+  };
+
+  var onOrderSubmit = function (evt) {
+    var form = evt.target;
+    evt.preventDefault();
+    var formData = new FormData(form);
+    var onLoad = function () {
+      var successModal = document.querySelector('.modal--success');
+      window.showModal(successModal);
+      resetForm(form);
+      window.init();
+    };
+    window.sendOrder(formData, onLoad, window.onError);
+  };
+
+  window.togglePayForm = function (form, enable) {
+    form.addEventListener('submit', onOrderSubmit);
+    deliverType.addEventListener('click', onDeliverTypeClick);
+    paymentType.addEventListener('click', onPaymentTypeClick);
+    form.querySelectorAll('input').forEach(function (input) {
+      input.disabled = !enable;
+    });
+    form.querySelectorAll('fieldset').forEach(function (input) {
+      input.disabled = !enable;
+    });
+    if (!enable) {
+      form.removeEventListener('submit', onOrderSubmit);
+    }
+  };
 
   var updateMap = function (name, img) {
     var map = document.querySelector('.deliver__store-map-wrap > .deliver__store-map-img');
