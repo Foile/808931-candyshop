@@ -3,6 +3,7 @@
   window.goods = [];
   var STARS_CLASSES = ['stars__rating--one', 'stars__rating--two', 'stars__rating--three', 'stars__rating--four', 'stars__rating--five'];
   window.picturePath = 'img/cards/';
+
   var renderCard = function (template, good) {
     var card = template.cloneNode(true);
     card.querySelector('.card__title').textContent = good.name;
@@ -20,7 +21,7 @@
     if (good.amount <= 0) {
       card.classList.add('card--soon');
     }
-    if (good.amount > 0 && good.amount <= 5) {
+    if (good.inStock && good.amount <= 5) {
       card.classList.add('card--little');
     }
     var stars = card.querySelector('.stars__rating');
@@ -41,26 +42,25 @@
         card.querySelector('.card__composition').classList.add('card__composition--hidden');
       }
     });
+
     var favoriteButton = card.querySelector('.card__btn-favorite');
-    favoriteButton.addEventListener('click', function () {
-      if (favoriteButton.querySelector('.card__btn-favorite--selected')) {
-        favoriteButton.classList.remove('card__btn-favorite--selected');
-      } else {
-        favoriteButton.classList.add('card__btn-favorite--selected');
-      }
+    window.toggleClass(favoriteButton, good.isFavorite, 'card__btn-favorite--selected');
+
+    favoriteButton.addEventListener('click', function (evt) {
+      evt.preventDefault();
+      good.isFavorite = !good.isFavorite;
+      window.toggleClass(favoriteButton, good.isFavorite, 'card__btn-favorite--selected');
+      window.filterRenderStat('mark');
     });
+
     var addToCartButton = card.querySelector('.card__btn');
     if (good.amount > 0) {
-      addToCartButton.addEventListener('click', function () {
+      addToCartButton.addEventListener('click', function (evt) {
+        evt.preventDefault();
         good.amount += -1;
-        if (window.basketGoods.indexOf(good) >= 0) {
-          window.basketGoods[window.basketGoods.indexOf(good)].count += 1;
-        } else {
-          window.basketGoods.push(good);
-          window.basketGoods[window.basketGoods.indexOf(good)].count = 1;
-        }
+        window.basket.add(good);
         window.renderCatalog();
-        window.renderBasket();
+        window.basket.render();
       });
     }
     return card;
@@ -68,21 +68,43 @@
 
   var cardTemplate = document.querySelector('#card')
     .content.querySelector('.catalog__card');
+  var emptyFiltersTemplate = document.querySelector('#empty-filters')
+    .content.querySelector('.catalog__empty-filter');
 
-  window.renderCatalog = function () {
+  var renderCatalogBase = function () {
     var catalog = document.querySelector('.catalog__cards');
     catalog.querySelectorAll('.catalog__card').forEach(function (child) {
       catalog.removeChild(child);
     });
+
     catalog.classList.remove('catalog__cards--load');
     window.toggleClass(document.querySelector('.catalog__load'), true, 'visually-hidden');
     var fragment = document.createDocumentFragment();
     var visibleGoods = window.goods.filter(function (good) {
-      return (good.price >= window.filterMinPrice) && (good.price <= window.filterMaxPrice);
+      var visilbe = true;
+      window.filterList.forEach(function (filter) {
+        visilbe = visilbe && filter.filtrate(good);
+      });
+      return visilbe;
+    });
+    visibleGoods.sort(function (good1, good2) {
+      return window.sorting.sort(good1, good2);
     });
     visibleGoods.forEach(function (good) {
-      fragment.appendChild(renderCard(cardTemplate, window.goods[window.goods.indexOf(good)]));
+      fragment.appendChild(renderCard(cardTemplate, good));
     });
+    var child = catalog.querySelector('.catalog__empty-filter');
+    if (child !== null) {
+      catalog.removeChild(child);
+    }
+    if (visibleGoods.length === 0) {
+      var emptyFilter = emptyFiltersTemplate.cloneNode(true);
+      emptyFilter.querySelector('.catalog__show-all').addEventListener('click', window.onFilterResetAll);
+      catalog.appendChild(emptyFilter);
+    }
+
     catalog.appendChild(fragment);
   };
+
+  window.renderCatalog = window.debounce(renderCatalogBase);
 })();

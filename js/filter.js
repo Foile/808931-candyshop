@@ -1,22 +1,231 @@
 'use strict';
 (function () {
-  window.filterMinPrice = window.MIN_PRICE;
-  window.filterMaxPrice = window.MAX_PRICE;
-  var rangeFilter = document.querySelector('.range__filter');
-  var priceRangeFilterLeft = rangeFilter.querySelector('.range__btn--left');
-  var priceRangeFilterRight = rangeFilter.querySelector('.range__btn--right');
-  var priceRangeFilterLine = rangeFilter.querySelector('.range__fill-line');
-  var pinWidth = priceRangeFilterRight.clientWidth;
-
-  var calcFilterValue = function (pos) {
-    pos += pinWidth / 2;
-    return Math.round((window.TOTAL_MAX_PRICE * pos) / rangeFilter.clientWidth);
+  var Filter = function () {
+    this._create();
+  };
+  Filter.prototype._create = function () {
+    this.filtersToReset = [];
+    this.active = false;
+    this.matches = 0;
+    this.isMatch = function () {
+      return true;
+    };
+    this.filtrate = function (good) {
+      return this.isMatch(good);
+    };
+    this.resetFilter = function () {
+    };
+    this.updateFilter = function () {
+    };
+    this.filterElementsSelector = function () {
+      return '';
+    };
+    this.getFilterStat = function () {
+      var element = document.querySelector(this.filterElementsSelector(this.name));
+      this.matches = 0;
+      window.goods.forEach(function (good) {
+        this.matches += (this.isMatch(good, element) ? 1 : 0);
+      }, this);
+      element.parentNode.querySelector('.range__price-count > span').textContent = '(' + this.matches + ')';
+    };
   };
 
-  var calcFilterPosition = function (value) {
-    return Math.round((maxX * value) / window.TOTAL_MAX_PRICE);
+  var getTypeFilterValue = function (control) {
+    return control.parentNode.querySelector('label').textContent;
+  };
+  var updateFilterMatchesCountElement = function (element, count) {
+    element.parentNode.querySelector('span').textContent = '(' + count + ')';
   };
 
+  var TypeFilter = function (name) {
+    Filter.apply(this, arguments);
+    this.name = name;
+    this.active = false;
+    this.filtersToReset = ['mark'];
+    this.filterElementsSelector = function (elName) {
+      return '.catalog__filter > li > input[name^="' + elName + '"]';
+    };
+    this.isMatch = function (good, filter) {
+      return good.kind === getTypeFilterValue(filter);
+    };
+
+    this.resetFilter = function () {
+      document.querySelectorAll(this.filterElementsSelector(this.name)).forEach(function (element) {
+        element.checked = false;
+      });
+    };
+
+    this.updateFilter = function () {
+      this.active = (document.querySelector(this.filterElementsSelector(this.name) + ':checked') && true);
+      if (this.active && (this.filtersToReset.length > 0)) {
+        window.filterList.forEach(function (filterToReset) {
+          this.filtersToReset.forEach(function (resetName) {
+            if ((resetName === 'all' && filterToReset.name !== this.name) || (filterToReset.name === resetName)) {
+              filterToReset.resetFilter();
+            }
+          }, this);
+        }, this);
+      }
+    };
+
+    this.filtrate = function (good) {
+      var match = !this.active;
+      document.querySelectorAll(this.filterElementsSelector(this.name) + ':checked').forEach(function (filter) {
+        match = match || this.isMatch(good, filter);
+      }, this);
+      return match;
+    };
+    this.getFilterStat = function () {
+      document.querySelectorAll(this.filterElementsSelector(this.name)).forEach(function (element) {
+        this.matches = 0;
+        window.goods.forEach(function (good) {
+          this.matches += (this.isMatch(good, element) ? 1 : 0);
+        }, this);
+        updateFilterMatchesCountElement(element, this.matches);
+      }, this);
+    };
+  };
+
+  TypeFilter.prototype = Object.create(Filter.prototype);
+
+  var PropertyFilter = function () {
+    TypeFilter.apply(this, arguments);
+    this.name = 'food-property';
+    this.isMatch = function (good, filter) {
+      var fact = filter.value;
+      var match = true;
+      switch (fact) {
+        case 'gluten-free': match = !good.nutritionFacts.gluten; break;
+        case 'sugar-free': match = !good.nutritionFacts.sugar; break;
+        case 'vegetarian': match = good.nutritionFacts.vegetarian; break;
+      }
+      return match;
+    };
+    this.filtrate = function (good) {
+      var match = true;
+      var filterFacts = [];
+      document.querySelectorAll(this.filterElementsSelector(this.name) + ':checked').forEach(function (filter) {
+        filterFacts.push(filter);
+      });
+      filterFacts.forEach(function (filter) {
+        match = match && this.isMatch(good, filter);
+      }, this);
+      return match;
+    };
+  };
+
+  PropertyFilter.prototype = Object.create(TypeFilter.prototype);
+
+  var MarkFilter = function () {
+    TypeFilter.apply(this, arguments);
+    this.filtersToReset = ['all'];
+    this.name = 'mark';
+    this.isMatch = function (good, filter) {
+      var mark = filter.value;
+      var match = true;
+      switch (mark) {
+        case 'favorite': match = match && good.isFavorite; break;
+        case 'availability': match = match && good.inStock; break;
+      }
+      return match;
+    };
+    this.filtrate = function (good) {
+      var match = true;
+      document.querySelectorAll(this.filterElementsSelector(this.name) + ':checked').forEach(function (filter) {
+        match = match && this.isMatch(good, filter);
+      }, this);
+      return match;
+    };
+  };
+
+  MarkFilter.prototype = Object.create(TypeFilter.prototype);
+
+
+  var PriceFilter = function () {
+    Filter.apply(this, arguments);
+    this.name = 'price';
+    this.active = true;
+    this.filterMin = window.MIN_PRICE;
+    this.filterMax = window.MAX_PRICE;
+    this.rangeFilter = document.querySelector('.range__filter');
+    this.pinLeft = this.rangeFilter.querySelector('.range__btn--left');
+    this.pinRight = this.rangeFilter.querySelector('.range__btn--right');
+    this.filterLine = this.rangeFilter.querySelector('.range__fill-line');
+    this.pinWidth = this.pinRight.clientWidth;
+    this.minX = this.rangeFilter.clientLeft - this.pinRight.clientWidth / 2;
+    this.maxX = this.rangeFilter.clientLeft + this.rangeFilter.clientWidth - this.pinRight.clientWidth / 2;
+    this.filterElementsSelector = function () {
+      return '.range__prices';
+    };
+    this.isMatch = function (good) {
+      return (good.price >= priceFilter.filterMin) && (good.price <= priceFilter.filterMax);
+    };
+    this.resetFilter = function () {
+      this.rangeFilter.addEventListener('click', onRangeFilterClick);
+      this.pinRight.addEventListener('mousedown', onFilterPinMouseDown);
+      this.pinLeft.addEventListener('mousedown', onFilterPinMouseDown);
+      this.pinMoved = false;
+      document.querySelector('.range__prices .range__price--min').textContent = window.MIN_PRICE;
+      document.querySelector('.range__prices .range__price--max').textContent = window.MAX_PRICE;
+      this.filterMin = window.MIN_PRICE;
+      this.filterMax = window.MAX_PRICE;
+      changePinPosition(this.pinLeft, this.calcFilterPosition(this.filterMin) - this.pinWidth / 2);
+      changePinPosition(this.pinRight, this.calcFilterPosition(this.filterMax));
+      this.lineUpdate();
+    };
+  };
+
+  PriceFilter.prototype = Object.create(Filter.prototype);
+
+  var onRangeFilterClick = function (evt) {
+    evt.preventDefault();
+    priceFilter.pinEvt = evt;
+    if (priceFilter.pinMoved) {
+      pinMovedOff();
+      return;
+    }
+    var X = evt.clientX;
+    priceFilter.calcPin(X);
+  };
+
+  var pinMovedOff = function () {
+    priceFilter.pinMoved = false;
+  };
+
+  var onMouseMove = function (moveEvt) {
+    priceFilter.pinMoved = true;
+    moveEvt.preventDefault();
+    var shift = priceFilter.startX - moveEvt.clientX;
+    priceFilter.startX = moveEvt.clientX;
+    changePinPosition(priceFilter.pinEvt.target, priceFilter.pinEvt.target.offsetLeft - shift, priceFilter.minX, priceFilter.maxX);
+    priceFilter.lineUpdate();
+    priceFilter.rangeFilter.removeEventListener('click', onRangeFilterClick);
+  };
+
+  var onMouseUp = function (upEvt) {
+    window.renderCatalog();
+    upEvt.preventDefault();
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    priceFilter.rangeFilter.addEventListener('click', onRangeFilterClick);
+    priceFilter.rangeFilter.addEventListener('mouseleave', pinMovedOff);
+  };
+
+  var onFilterPinMouseDown = function (evt) {
+    evt.preventDefault();
+    priceFilter.startX = evt.clientX;
+    priceFilter.pinEvt = evt;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  PriceFilter.prototype.calcFilterValue = function (pos) {
+    pos += this.pinWidth / 2;
+    return Math.round((window.TOTAL_MAX_PRICE * pos) / this.rangeFilter.clientWidth);
+  };
+  PriceFilter.prototype.calcFilterPosition = function (value) {
+    return Math.round((this.maxX * value) / window.TOTAL_MAX_PRICE);
+  };
   var changePinPosition = function (element, X, min, max) {
     if (X < min) {
       X = min;
@@ -27,94 +236,134 @@
     element.style.left = X + 'px';
   };
 
-  var priceFilterLineUpdate = function () {
-    var left = priceRangeFilterLeft.offsetLeft;
-    var right = priceRangeFilterRight.offsetLeft;
+  PriceFilter.prototype.updateValue = function () {
+    document.querySelector('.range__prices .range__price--min').textContent = this.filterMin;
+    document.querySelector('.range__prices .range__price--max').textContent = this.filterMax;
+    this.getFilterStat();
+  };
+
+  PriceFilter.prototype.lineUpdate = function () {
+    var left = this.pinLeft.offsetLeft;
+    var right = this.pinRight.offsetLeft;
     if (left > right) {
-      right = priceRangeFilterLeft.offsetLeft;
-      left = priceRangeFilterRight.offsetLeft;
+      right = this.pinLeft.offsetLeft;
+      left = this.pinRight.offsetLeft;
     }
-    window.filterMinPrice = calcFilterValue(left);
-    window.filterMaxPrice = calcFilterValue(right);
-    priceRangeFilterLine.style.right = (maxX - right) + 'px';
-    priceRangeFilterLine.style.left = (left + pinWidth / 2) + 'px';
-    updatePriceFilter();
+    this.filterMin = this.calcFilterValue(left);
+    this.filterMax = this.calcFilterValue(right);
+    this.filterLine.style.right = (this.maxX - right) + 'px';
+    this.filterLine.style.left = (left + this.pinWidth / 2) + 'px';
+    this.updateValue();
   };
 
-  window.initPriceFilter = function () {
-    document.querySelector('.range__prices .range__price--min').textContent = window.MIN_PRICE;
-    document.querySelector('.range__prices .range__price--max').textContent = window.MAX_PRICE;
-    window.filterMinPrice = window.MIN_PRICE;
-    window.filterMaxPrice = window.MAX_PRICE;
-    changePinPosition(priceRangeFilterLeft, calcFilterPosition(window.filterMinPrice) - pinWidth / 2);
-    changePinPosition(priceRangeFilterRight, calcFilterPosition(window.filterMaxPrice));
-    priceFilterLineUpdate();
-  };
-
-  var updatePriceFilter = function () {
-    document.querySelector('.range__prices .range__price--min').textContent = window.filterMinPrice;
-    document.querySelector('.range__prices .range__price--max').textContent = window.filterMaxPrice;
-  };
-
-  window.initPriceFilter();
-
-  var minX = rangeFilter.clientLeft - priceRangeFilterRight.clientWidth / 2;
-  var maxX = rangeFilter.clientLeft + rangeFilter.clientWidth - priceRangeFilterRight.clientWidth / 2;
-  var pinMoved = false;
-  var onRangeFilterClick = function (evt) {
-    evt.preventDefault();
-    if (pinMoved) {
-      pinMoved = false;
-      return;
-    }
-    var X = evt.clientX - rangeFilter.offsetLeft;
-    var filterValue = calcFilterValue(X);
-    if (X < minX + ((maxX - minX) / 2)) {
-      changePinPosition(priceRangeFilterLeft, X - 0.5 * pinWidth, minX, priceRangeFilterRight.offsetLeft);
-      window.filterMinPrice = filterValue;
+  PriceFilter.prototype.calcPin = function (X) {
+    X -= this.rangeFilter.offsetLeft;
+    var filterValue = this.calcFilterValue(X);
+    if (X < this.minX + ((this.maxX - this.minX) / 2)) {
+      changePinPosition(this.pinLeft, X - 0.5 * this.pinWidth, this.minX, this.pinRight.offsetLeft);
+      this.filterMin = filterValue;
     } else {
-      changePinPosition(priceRangeFilterRight, X - 0.5 * pinWidth, priceRangeFilterLeft.offsetLeft, maxX);
-      window.filterMaxPrice = filterValue;
+      changePinPosition(this.pinRight, X - 0.5 * this.pinWidth, this.pinLeft.offsetLeft, this.maxX);
+      this.filterMax = filterValue;
     }
-    pinMoved = false;
-    priceFilterLineUpdate();
+    pinMovedOff();
+    this.lineUpdate();
     window.renderCatalog();
   };
 
-  var onFilterPinMouseDown = function (evt) {
+  window.filterList = [];
+
+  var priceFilter = new PriceFilter();
+
+  window.filterList = [
+    priceFilter,
+    new MarkFilter('mark'),
+    new TypeFilter('food-type'),
+    new PropertyFilter('food-property')
+  ];
+
+  window.sorting = {
+    name: 'sort',
+    sort: function (good1, good2) {
+      var res = this.getActiveSort(good1, good2);
+      return res;
+    },
+    getActiveSort: function (good1, good2) {
+      var activeSort = 'popular';
+      var filter = document.querySelector('.catalog__filter > li > input[name^="' + this.name + '"]:checked');
+      if (filter) {
+        activeSort = filter.value;
+      }
+      return this.sortType[activeSort](good1, good2);
+    },
+    sortType: {
+      popular: function () {
+        return 0;
+      },
+      expensive: function (good1, good2) {
+        return good2.price - good1.price;
+      },
+      cheep: function (good1, good2) {
+        return good1.price - good2.price;
+      },
+      rating: function (good1, good2) {
+        return (good2.rating.value * window.MAX_RATING_NUMBER + good2.rating.number) - (good1.rating.value * window.MAX_RATING_NUMBER + good1.rating.number);
+      }
+    }
+  };
+
+  window.resetFilters = function () {
+    window.filterList.forEach(function (filter) {
+      filter.resetFilter();
+    });
+  };
+
+  window.updateFilters = function () {
+    window.filterList.forEach(function (filter) {
+      filter.updateFilter();
+    });
+  };
+
+  window.onFilterResetAll = function (evt) {
     evt.preventDefault();
-    var startX = evt.clientX;
-    var onMouseMove = function (moveEvt) {
-      pinMoved = true;
-      moveEvt.preventDefault();
-      var shift = startX - moveEvt.clientX;
-      startX = moveEvt.clientX;
-      changePinPosition(evt.target, evt.target.offsetLeft - shift, minX, maxX);
-      priceFilterLineUpdate();
-      rangeFilter.removeEventListener('click', onRangeFilterClick);
-    };
-    var onMouseUp = function (upEvt) {
-      window.renderCatalog();
-      upEvt.preventDefault();
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-      rangeFilter.addEventListener('click', onRangeFilterClick);
-      rangeFilter.addEventListener('mouseleave', function () {
-        pinMoved = false;
+    window.resetFilters();
+    window.renderCatalog();
+  };
+
+  document.querySelector('.catalog__submit').addEventListener('click', window.onFilterResetAll);
+
+  document.querySelectorAll('.catalog__filter > li > input').forEach(function (element) {
+    element.addEventListener('change', function (evt) {
+      if ((evt.target.name === 'mark') && evt.target.checked) {
+        var otherElements = element.parentNode.parentNode.querySelectorAll('input[name="' + evt.target.name + '"]:checked');
+        otherElements.forEach(function (el) {
+          el.checked = el.value === evt.target.value;
+        });
+      }
+      var oneFilter = window.filterList.find(function (filter) {
+        return filter.name === evt.target.name;
       });
-    };
+      if (oneFilter) {
+        oneFilter.updateFilter();
+      }
+      window.updateFilters();
+      window.renderCatalog();
+    });
+  });
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+  window.filterRenderStat = function (name) {
+    if (name === undefined) {
+      window.filterList.forEach(function (filter) {
+        filter.getFilterStat();
+      });
+    } else {
+      var oneFilter = window.filterList.find(function (filter) {
+        return filter.name === name;
+      });
+      if (oneFilter) {
+        oneFilter.getFilterStat();
+      }
+    }
   };
 
-  rangeFilter.addEventListener('click', onRangeFilterClick);
-  priceRangeFilterRight.addEventListener('mousedown', onFilterPinMouseDown);
-  priceRangeFilterLeft.addEventListener('mousedown', onFilterPinMouseDown);
-
-  document.querySelector('.catalog__submit').addEventListener('click', function (evt) {
-    evt.preventDefault();
-    window.initPriceFilter();
-    window.renderCatalog();
-  });
 })();

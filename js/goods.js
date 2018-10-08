@@ -4,6 +4,8 @@
   window.TOTAL_MAX_PRICE = 1500;
   window.MAX_PRICE = 0;
   window.MIN_PRICE = 1500;
+  window.MAX_RATING_NUMBER = 100;
+
   var onCatalogLoaded = function (data) {
     window.goods = data;
     window.GOODS_COUNT = data.length;
@@ -14,20 +16,26 @@
       if (element.price > window.MAX_PRICE) {
         window.MAX_PRICE = element.price;
       }
+      element.isFavorite = false;
+      element.inStock = element.amount > 0;
+      if (element.rating.number > window.MAX_RATING_NUMBER) {
+        window.MAX_RATING_NUMBER = element.rating.number;
+      }
+
     });
-    window.filterMinPrice = window.MIN_PRICE;
-    window.filterMaxPrice = window.MAX_PRICE;
-    window.initPriceFilter();
+    window.resetFilters();
     window.renderCatalog();
+    window.filterRenderStat();
   };
+
   window.init = function () {
     window.onError = function () {
       window.showModal(document.querySelector('.modal--error'));
     };
 
     window.loadCatalog(onCatalogLoaded, window.onError);
-    window.basketGoods = [];
-    window.renderBasket();
+    window.basket.goods = [];
+    window.basket.render();
   };
   window.init();
 })();

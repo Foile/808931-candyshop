@@ -32,7 +32,7 @@
             <li class="input-btn">
               <input class="input-btn__input visually-hidden input-btn__input--checkbox" name="food-type" value="icecream"
                 type="checkbox" id="filter-icecream">
-              <label class="input-btn__label input-btn__label--checkbox" for="filter-icecream">Мороженное</label>
+              <label class="input-btn__label input-btn__label--checkbox" for="filter-icecream">Мороженое</label>
               <span class="input-btn__item-count">(7)</span>
             </li>
 
@@ -245,7 +245,7 @@
 
                     <p class="text-input text-input--light payment__input-wrap payment__input-wrap--card-date">
                       <input type="text" class="text-input__input" name="card-date" id="payment__card-date" placeholder="мм/гг"
-                        pattern="[0-9]{2}\/[0-9]{2}" required>
+                        pattern="([0-9]{2})\/([0-9]{2})" required>
                       <label class="text-input__label" for="payment__card-date">мм/гг</label>
                     </p>
 
@@ -396,7 +396,8 @@
                   </li>
 
                   <li class="text-input deliver__floor">
-                    <input type="text" class="text-input__input" name="deliver-floor" id="deliver__floor" placeholder="Эт.">
+                    <input type="number" class="text-input__input" name="deliver-floor" id="deliver__floor" placeholder="Эт."
+                      max="163">
                     <label class="text-input__label" for="deliver__floor">Эт.</label>
                   </li>
 
@@ -535,12 +536,13 @@
     </div>
   </template>
   <script src="js/utils.js"></script>
-  <script src="js/catalog.js"></script>
-  <script src="js/order.js"></script>
-  <script src="js/backend.js"></script>
-  <script src="js/goods.js"></script>
+  <script src="js/debounce.js"></script>
   <script src="js/filter.js"></script>
-
+  <script src="js/backend.js"></script>
+  <script src="js/order.js"></script>
+  <script src="js/basket.js"></script>
+  <script src="js/goods.js"></script>
+  <script src="js/catalog.js"></script>
 </body>
 
 </html>
