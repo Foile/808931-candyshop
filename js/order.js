@@ -113,15 +113,8 @@
     deliverType.removeEventListener('click', onDeliverTypeClick);
   };
 
-  var validateCardStatus = function () {
-    var field = document.querySelector('#payment__card');
-    if (field.checked && (document.querySelector('.payment__card-wrap .payment__card-status').textContent !== 'Одобрен'))
-      field.setCustomValidity('Invalid card.');
-  };
-
   var onOrderSubmit = function (evt) {
     var form = evt.target;
-    validateCardStatus();
     var formData = new FormData(form);
     var onLoad = function () {
       var successModal = document.querySelector('.modal--success');
