@@ -26,7 +26,7 @@
       <h2 class="visually-hidden">Каталог товаров</h2>
 
       <aside class="catalog__sidebar">
-        <form action="/">
+        <form action="/" onsubmit="return window.validateForm()">
 
           <ul class="catalog__filter">
             <li class="input-btn">
@@ -259,7 +259,7 @@
                   <div class="payment__cardholder-group">
                     <p class="text-input text-input--light payment__input-wrap payment__input-wrap--cardholder">
                       <input type="text" class="text-input__input" name="cardholder" id="payment__cardholder"
-                        placeholder="ИМЯ ДЕРЖАТЕЛЯ" required>
+                        placeholder="ИМЯ ДЕРЖАТЕЛЯ" minlength="3" required>
                       <label class="text-input__label" for="payment__cardholder">ИМЯ ДЕРЖАТЕЛЯ</label>
                     </p>
 

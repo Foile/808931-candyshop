@@ -21,17 +21,24 @@
     return (res === 0) && (cardNumber.length === 16);
   };
 
-  var onBlurCardFields = function () {
-    var cardNumber = document.querySelector('#payment__card-number').value;
-    var valid = checkCardNumber(cardNumber);
-    var date = document.querySelector('#payment__card-date').value;
+  var checkCvc = function (cvc) {
+    return (parseInt(cvc, 10) >= 100 && (parseInt(cvc, 10) <= 999));
+  };
+  var checkDate = function (date) {
+    var res = true;
     var dateMatch = date.match('([0-9]{2})/([0-9]{2})');
+    if (dateMatch.length < 2) {
+      return false;
+    }
     var curDate = new Date();
     var currentYear = (curDate).getFullYear();
     var currentMonth = parseInt((curDate).getMonth().toString(), 10);
-    var cardYear = 2000 + parseInt(dateMatch[2], 10);
     var cardMonth = parseInt(dateMatch[1], 10);
-    valid = valid &&
+    var cardYear = 2000;
+    if (dateMatch.length > 1) {
+      cardYear += parseInt(dateMatch[2], 10);
+    }
+    res = res &&
       (dateMatch.length > 2) &&
       (cardMonth > 0) &&
       (cardMonth <= 12) &&
@@ -41,11 +48,25 @@
         ) || (cardYear >= currentYear)
       );
 
-    var cvc = document.querySelector('#payment__card-cvc').value;
-    valid = valid && (parseInt(cvc, 10) >= 100 && (parseInt(cvc, 10) <= 999));
-    var holder = document.querySelector('#payment__cardholder').value;
-    valid = valid && (holder.length > 2);
-    document.querySelector('.payment__card-wrap .payment__card-status').textContent = valid ? 'Одобрен' : 'Не определён';
+    return res;
+  };
+
+
+  var onBlurCardFields = function () {
+
+    var cardNumber = document.querySelector('#payment__card-number');
+    var valid = checkCardNumber(cardNumber.value);
+    cardNumber.setCustomValidity(valid ? '' : 'Неверный номер карты');
+    var res = valid;
+    var cvc = document.querySelector('#payment__card-cvc');
+    valid = checkCvc(cvc.value);
+    res = res && valid;
+    cvc.setCustomValidity(valid ? '' : 'Неверный CVC');
+    var date = document.querySelector('#payment__card-date');
+    valid = valid && checkDate(date.value);
+    res = res && valid;
+    date.setCustomValidity(valid ? '' : 'Неверный срок действия карты');
+    document.querySelector('.payment__card-wrap .payment__card-status').textContent = res ? 'Одобрен' : 'Не определён';
   };
 
   document.querySelectorAll('.payment__inputs > div > p > input').forEach(function (field) {
@@ -92,8 +113,15 @@
     deliverType.removeEventListener('click', onDeliverTypeClick);
   };
 
+  var validateCardStatus = function () {
+    var field = document.querySelector('#payment__card');
+    if (field.checked && (document.querySelector('.payment__card-wrap .payment__card-status').textContent !== 'Одобрен'))
+      field.setCustomValidity('Invalid card.');
+  };
+
   var onOrderSubmit = function (evt) {
     var form = evt.target;
+    validateCardStatus();
     var formData = new FormData(form);
     var onLoad = function () {
       var successModal = document.querySelector('.modal--success');
@@ -103,6 +131,7 @@
     };
     window.sendOrder(formData, onLoad, window.onError);
   };
+
 
   var buyForm = document.querySelector('.buy form');
   buyForm.addEventListener('submit', function (evt) {
