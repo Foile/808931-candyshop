@@ -29,7 +29,9 @@
   };
 
   window.init = function () {
-    window.onError = function () {
+    window.onError = function (error) {
+      var errorElement = document.querySelector('.modal--error');
+      errorElement.querySelector('.modal__message').textContent = error;
       window.showModal(document.querySelector('.modal--error'));
     };
 

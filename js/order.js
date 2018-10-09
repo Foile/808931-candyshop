@@ -47,13 +47,11 @@
           (cardYear === currentYear) && (cardMonth > currentMonth)
         ) || (cardYear >= currentYear)
       );
-
     return res;
   };
 
 
   var onBlurCardFields = function () {
-
     var cardNumber = document.querySelector('#payment__card-number');
     var valid = checkCardNumber(cardNumber.value);
     cardNumber.setCustomValidity(valid ? '' : 'Неверный номер карты');
@@ -79,7 +77,6 @@
     document.querySelector('#payment__card-cvc').required = isCard;
     document.querySelector('#payment__card-date').required = isCard;
     document.querySelector('#payment__cardholder').required = isCard;
-
     window.toggleClass(document.querySelector('.payment__card-wrap'), !isCard, 'visually-hidden');
     window.toggleClass(document.querySelector('.payment__cash-wrap'), !document.querySelector('#payment__cash').checked, 'visually-hidden');
   };
@@ -89,7 +86,6 @@
     document.querySelector('#deliver__street').required = isCourier;
     document.querySelector('#deliver__house').required = isCourier;
     document.querySelector('#deliver__room').required = isCourier;
-
     window.toggleClass(document.querySelector('.deliver__store'), !document.querySelector('#deliver__store').checked, 'visually-hidden');
     window.toggleClass(document.querySelector('.deliver__courier'), !isCourier, 'visually-hidden');
   };
@@ -130,6 +126,7 @@
   buyForm.addEventListener('submit', function (evt) {
     evt.preventDefault();
   });
+
   window.togglePayForm = function (enable) {
     buyForm.addEventListener('submit', onOrderSubmit);
     deliverType.addEventListener('click', onDeliverTypeClick);

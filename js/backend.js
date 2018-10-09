@@ -1,13 +1,15 @@
 'use strict';
 (function () {
-  var _UrlLoad = 'https://js.dump.academy/candyshop/data';
-  var _UrlSave = 'https://js.dump.academy/candyshop';
+  var _URL_LOAD = 'https://js.dump.academy/candyshop/data';
+  var _URL_SAVE = 'https://js.dump.academy/candyshop';
+  var _HTML_OK = 200;
+  var _TIMEOUT = 10000;
 
-  window.loadCatalog = function (onLoad, onError) {
+  var sendRequest = function (method, url, data, onLoad, onError) {
     var xhr = new XMLHttpRequest();
     xhr.responseType = 'json';
     xhr.addEventListener('load', function () {
-      if (xhr.status === 200) {
+      if (xhr.status === _HTML_OK) {
         onLoad(xhr.response);
       } else {
         onError('Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText);
@@ -19,29 +21,15 @@
     xhr.addEventListener('timeout', function () {
       onError('Запрос не успел выполниться за ' + xhr.timeout + 'мс');
     });
-    xhr.timeout = 10000; // 10s
-    xhr.open('GET', _UrlLoad);
-    xhr.send();
+    xhr.timeout = _TIMEOUT;
+    xhr.open(method, url);
+    xhr.send(data);
+  };
+  window.loadCatalog = function (onLoad, onError) {
+    sendRequest('GET', _URL_LOAD, undefined, onLoad, onError);
   };
 
   window.sendOrder = function (data, onLoad, onError) {
-    var xhr = new XMLHttpRequest();
-    xhr.responseType = 'json';
-    xhr.addEventListener('load', function () {
-      if (xhr.status === 200) {
-        onLoad(xhr.response);
-      } else {
-        onError('Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText);
-      }
-    });
-    xhr.addEventListener('error', function () {
-      onError('Произошла ошибка соединения');
-    });
-    xhr.addEventListener('timeout', function () {
-      onError('Запрос не успел выполниться за ' + xhr.timeout + 'мс');
-    });
-    xhr.timeout = 10000; // 10s
-    xhr.open('POST', _UrlSave);
-    xhr.send(data);
+    sendRequest('POST', _URL_SAVE, data, onLoad, onError);
   };
 })();
