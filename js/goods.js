@@ -28,13 +28,13 @@
     window.filterRenderStat();
   };
 
-  window.init = function () {
-    window.onError = function (error) {
-      var errorElement = document.querySelector('.modal--error');
-      errorElement.querySelector('.modal__message').textContent = error;
-      window.showModal(document.querySelector('.modal--error'));
-    };
+  window.onError = function (error) {
+    var errorElement = document.querySelector('.modal--error');
+    errorElement.querySelector('.modal__message').textContent = error;
+    window.showModal(document.querySelector('.modal--error'));
+  };
 
+  window.init = function () {
     window.loadCatalog(onCatalogLoaded, window.onError);
     window.basket.goods = [];
     window.basket.render();
