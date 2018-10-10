@@ -18,12 +18,13 @@
       sum += n;
     }
     res = sum % 10;
-    return (res === 0) && (cardNumber.length === 16);
+    return (res === 0) && (cardNumber.length >= 16) && (cardNumber.length <= 20);
   };
 
   var checkCvc = function (cvc) {
     return (parseInt(cvc, 10) >= 100 && (parseInt(cvc, 10) <= 999));
   };
+
   var checkDate = function (date) {
     var res = true;
     var dateMatch = date.match('([0-9]{2})/([0-9]{2})');
@@ -52,16 +53,17 @@
 
 
   var onBlurCardFields = function () {
+    var isCard = document.querySelector('#payment__card').checked;
     var cardNumber = document.querySelector('#payment__card-number');
-    var valid = checkCardNumber(cardNumber.value);
+    var valid = isCard && checkCardNumber(cardNumber.value);
     cardNumber.setCustomValidity(valid ? '' : 'Неверный номер карты');
     var res = valid;
     var cvc = document.querySelector('#payment__card-cvc');
-    valid = checkCvc(cvc.value);
+    valid = isCard && checkCvc(cvc.value);
     res = res && valid;
     cvc.setCustomValidity(valid ? '' : 'Неверный CVC');
     var date = document.querySelector('#payment__card-date');
-    valid = valid && checkDate(date.value);
+    valid = isCard && checkDate(date.value);
     res = res && valid;
     date.setCustomValidity(valid ? '' : 'Неверный срок действия карты');
     document.querySelector('.payment__card-wrap .payment__card-status').textContent = res ? 'Одобрен' : 'Не определён';
@@ -114,17 +116,29 @@
     var formData = new FormData(form);
     var onLoad = function () {
       var successModal = document.querySelector('.modal--success');
-      window.showModal(successModal);
+      window.utils.showModal(successModal);
       resetForm(form);
-      window.init();
+      window.utils.init();
     };
-    window.sendOrder(formData, onLoad, window.onError);
+    window.backend.sendOrder(formData, onLoad, window.utils.onError);
   };
 
 
   var buyForm = document.querySelector('.buy form');
   buyForm.addEventListener('submit', function (evt) {
     evt.preventDefault();
+  });
+
+  var updateMap = function (name, img) {
+    var map = document.querySelector('.deliver__store-map-wrap > .deliver__store-map-img');
+    map.src = shippingPicturePath + img + '.jpg';
+    map.alt = name;
+  };
+
+  document.querySelector('.deliver__store-list').addEventListener('change', function () {
+    var selectedStore = document.querySelector('.deliver__store-list > li > input[name="store"]:checked');
+    selectedStore.parentNode.src = shippingPicturePath + selectedStore.value + '.jpg';
+    updateMap(selectedStore.parentNode.querySelector('label').textContent, selectedStore.value);
   });
 
   window.togglePayForm = function (enable) {
@@ -141,17 +155,4 @@
       buyForm.removeEventListener('submit', onOrderSubmit);
     }
   };
-
-  var updateMap = function (name, img) {
-    var map = document.querySelector('.deliver__store-map-wrap > .deliver__store-map-img');
-    map.src = shippingPicturePath + img + '.jpg';
-    map.alt = name;
-  };
-
-  document.querySelector('.deliver__store-list').addEventListener('change', function () {
-    var selectedStore = document.querySelector('.deliver__store-list > li > input[name="store"]:checked');
-    selectedStore.parentNode.src = shippingPicturePath + selectedStore.value + '.jpg';
-    updateMap(selectedStore.parentNode.querySelector('label').textContent, selectedStore.value);
-  });
-
 })();

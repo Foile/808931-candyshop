@@ -1,43 +1,30 @@
 'use strict';
 (function () {
-  window.GOODS_COUNT = 26;
-  window.TOTAL_MAX_PRICE = 1500;
-  window.MAX_PRICE = 0;
-  window.MIN_PRICE = 1500;
-  window.MAX_RATING_NUMBER = 100;
-
   var onCatalogLoaded = function (data) {
-    window.goods = data;
-    window.GOODS_COUNT = data.length;
-    window.goods.forEach(function (element) {
-      if (element.price < window.MIN_PRICE) {
-        window.MIN_PRICE = element.price;
+    window.catalog.goods = data;
+    window.utils.limits.GOODS_COUNT = data.length;
+    window.catalog.goods.forEach(function (element) {
+      if (element.price < window.utils.limits.MIN_PRICE) {
+        window.utils.limits.MIN_PRICE = element.price;
       }
-      if (element.price > window.MAX_PRICE) {
-        window.MAX_PRICE = element.price;
+      if (element.price > window.utils.limits.MAX_PRICE) {
+        window.utils.limits.MAX_PRICE = element.price;
       }
       element.isFavorite = false;
       element.inStock = element.amount > 0;
-      if (element.rating.number > window.MAX_RATING_NUMBER) {
-        window.MAX_RATING_NUMBER = element.rating.number;
+      if (element.rating.number > window.utils.limits.MAX_RATING_NUMBER) {
+        window.utils.limits.MAX_RATING_NUMBER = element.rating.number;
       }
-
     });
-    window.resetFilters();
-    window.renderCatalog();
-    window.filterRenderStat();
+    window.filter.resetAll();
+    window.catalog.render();
+    window.filter.renderStat();
   };
-
-  window.onError = function (error) {
-    var errorElement = document.querySelector('.modal--error');
-    errorElement.querySelector('.modal__message').textContent = error;
-    window.showModal(document.querySelector('.modal--error'));
-  };
-
   window.init = function () {
-    window.loadCatalog(onCatalogLoaded, window.onError);
+    window.backend.loadCatalog(onCatalogLoaded, this.onError);
     window.basket.goods = [];
     window.basket.render();
   };
+
   window.init();
 })();

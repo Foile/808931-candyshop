@@ -1,58 +1,48 @@
 'use strict';
 (function () {
   var CODE_ESC = 27;
-  window.newElement = function (type, cls, txt) {
-    var el = document.createElement(type);
-    el.classList.add(cls);
-    el.textContent = txt;
-    return el;
-  };
+  window.utils = {
+    limits: {
+      TOTAL_MAX_PRICE: 1500,
+      MAX_PRICE: 0,
+      MIN_PRICE: 1500,
+      MAX_RATING_NUMBER: 100,
+      GOODS_COUNT: 0
+    },
+    picturePath: 'img/cards/',
+    onError: function (error) {
+      var errorElement = document.querySelector('.modal--error');
+      errorElement.querySelector('.modal__message').textContent = error;
+      this.showModal(document.querySelector('.modal--error'));
+    },
 
-  window.toggleClass = function (element, add, name) {
-    if (!add) {
-      element.classList.remove(name);
-    } else {
-      element.classList.add(name);
+    newElement: function (type, cls, txt) {
+      var el = document.createElement(type);
+      el.classList.add(cls);
+      el.textContent = txt;
+      return el;
+    },
+    toggleClass: function (element, add, name) {
+      /*  if (!add) {
+          element.classList.remove(name);
+        } else {
+          element.classList.add(name);
+        }*/
+      return (!add) ? element.classList.remove(name) : element.classList.add(name);
+    },
+    showModal: function (modal) {
+      var onEscModalClose = function (evt) {
+        if (evt.keyCode === CODE_ESC) {
+          window.utils.toggleClass(modal, true, 'modal--hidden');
+        }
+      };
+      this.toggleClass(modal, false, 'modal--hidden');
+      modal.querySelector('.modal__close').addEventListener('click', function () {
+        window.utils.toggleClass(modal, true, 'modal--hidden');
+        document.removeEventListener('keydown', onEscModalClose);
+      });
+      document.addEventListener('keydown', onEscModalClose);
     }
   };
 
-  window.getRandomNumber = function (min, max) {
-    return min + Math.floor(Math.random() * (max - min));
-  };
-
-  window.getRandomArray = function (array, count) {
-    var sourceArray = array.slice(0);
-    var resultArray = [];
-    if (!count) {
-      count = window.getRandomNumber(1, array.length);
-    }
-
-    for (var i = 0; (i < count && sourceArray.length > 0); i++) {
-      var index = window.getRandomNumber(0, sourceArray.length);
-      resultArray.push(sourceArray[index]);
-      sourceArray.splice(index, 1);
-    }
-    return resultArray;
-  };
-
-  window.toggleAttribute = function (element, attr, value, add) {
-    element.removeAttribute(attr);
-    if (add) {
-      element.setAttribute(attr, value);
-    }
-  };
-
-  window.showModal = function (modal) {
-    var onEscModalClose = function (evt) {
-      if (evt.keyCode === CODE_ESC) {
-        window.toggleClass(modal, true, 'modal--hidden');
-      }
-    };
-    window.toggleClass(modal, false, 'modal--hidden');
-    modal.querySelector('.modal__close').addEventListener('click', function () {
-      window.toggleClass(modal, true, 'modal--hidden');
-      document.removeEventListener('keydown', onEscModalClose);
-    });
-    document.addEventListener('keydown', onEscModalClose);
-  };
 })();

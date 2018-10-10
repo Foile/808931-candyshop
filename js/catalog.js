@@ -1,19 +1,17 @@
 'use strict';
 (function () {
-  window.goods = [];
   var STARS_CLASSES = ['stars__rating--one', 'stars__rating--two', 'stars__rating--three', 'stars__rating--four', 'stars__rating--five'];
-  window.picturePath = 'img/cards/';
 
   var renderCard = function (template, good) {
     var card = template.cloneNode(true);
     card.querySelector('.card__title').textContent = good.name;
     var price = card.querySelector('.card__price');
     price.textContent = '';
-    price.appendChild(window.newElement('span', undefined, good.price));
-    price.appendChild(window.newElement('span', 'card__currency', '₽'));
-    price.appendChild(window.newElement('span', 'card__weight', '/ ' + good.weight + ' г' + ' / ' + good.amount + ' шт'));
+    price.appendChild(window.utils.newElement('span', undefined, good.price));
+    price.appendChild(window.utils.newElement('span', 'card__currency', '₽'));
+    price.appendChild(window.utils.newElement('span', 'card__weight', '/ ' + good.weight + ' г' + ' / ' + good.amount + ' шт'));
     var img = card.querySelector('.card__img');
-    img.src = window.picturePath + good.picture;
+    img.src = window.utils.picturePath + good.picture;
     img.alt = good.name;
     if (good.amount > 5) {
       card.classList.add('card--in-stock');
@@ -29,8 +27,7 @@
       if (STARS_CLASSES.indexOf(starsClass) >= 0) {
         stars.classList.remove(starsClass);
       }
-    }
-    );
+    });
     stars.classList.add(STARS_CLASSES[good.rating.value - 1]);
     card.querySelector('.star__count').textContent = good.rating.number;
     card.querySelector('.card__characteristic').textContent = (good.nutritionFacts.sugar ? 'Содержит сахар. ' : 'Без сахара. ') + good.nutritionFacts.energy + ' ккал';
@@ -44,13 +41,13 @@
     });
 
     var favoriteButton = card.querySelector('.card__btn-favorite');
-    window.toggleClass(favoriteButton, good.isFavorite, 'card__btn-favorite--selected');
+    window.utils.toggleClass(favoriteButton, good.isFavorite, 'card__btn-favorite--selected');
 
     favoriteButton.addEventListener('click', function (evt) {
       evt.preventDefault();
       good.isFavorite = !good.isFavorite;
-      window.toggleClass(favoriteButton, good.isFavorite, 'card__btn-favorite--selected');
-      window.filterRenderStat('mark');
+      window.utils.toggleClass(favoriteButton, good.isFavorite, 'card__btn-favorite--selected');
+      window.filter.renderStat('mark');
     });
 
     var addToCartButton = card.querySelector('.card__btn');
@@ -59,7 +56,7 @@
         evt.preventDefault();
         good.amount += -1;
         window.basket.add(good);
-        window.renderCatalog();
+        window.catalog.render();
         window.basket.render();
       });
     }
@@ -78,17 +75,17 @@
     });
 
     catalog.classList.remove('catalog__cards--load');
-    window.toggleClass(document.querySelector('.catalog__load'), true, 'visually-hidden');
+    window.utils.toggleClass(document.querySelector('.catalog__load'), true, 'visually-hidden');
     var fragment = document.createDocumentFragment();
-    var visibleGoods = window.goods.filter(function (good) {
+    var visibleGoods = window.catalog.goods.filter(function (good) {
       var visilbe = true;
-      window.filterList.forEach(function (filter) {
+      window.filter.filterList.forEach(function (filter) {
         visilbe = visilbe && filter.filtrate(good);
       });
       return visilbe;
     });
     visibleGoods.sort(function (good1, good2) {
-      return window.sorting.sort(good1, good2);
+      return window.filter.sorting.sort(good1, good2);
     });
     visibleGoods.forEach(function (good) {
       fragment.appendChild(renderCard(cardTemplate, good));
@@ -99,12 +96,16 @@
     }
     if (visibleGoods.length === 0) {
       var emptyFilter = emptyFiltersTemplate.cloneNode(true);
-      emptyFilter.querySelector('.catalog__show-all').addEventListener('click', window.onFilterResetAll);
+      emptyFilter.querySelector('.catalog__show-all').addEventListener('click', window.filter.onFilterResetAll);
       catalog.appendChild(emptyFilter);
     }
 
     catalog.appendChild(fragment);
   };
 
-  window.renderCatalog = window.debounce(renderCatalogBase);
+  window.catalog = {
+    goods: [],
+    render: window.debounce(renderCatalogBase)
+  };
+
 })();

@@ -25,11 +25,12 @@
     xhr.open(method, url);
     xhr.send(data);
   };
-  window.loadCatalog = function (onLoad, onError) {
-    sendRequest('GET', _URL_LOAD, undefined, onLoad, onError);
-  };
-
-  window.sendOrder = function (data, onLoad, onError) {
-    sendRequest('POST', _URL_SAVE, data, onLoad, onError);
+  window.backend = {
+    loadCatalog: function (onLoad, onError) {
+      sendRequest('GET', _URL_LOAD, undefined, onLoad, onError);
+    },
+    sendOrder: function (data, onLoad, onError) {
+      sendRequest('POST', _URL_SAVE, data, onLoad, onError);
+    }
   };
 })();

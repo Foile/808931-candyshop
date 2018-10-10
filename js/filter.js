@@ -14,6 +14,7 @@
       return this.isMatch(good);
     };
     this.resetFilter = function () {
+      this.active = false;
     };
     this.updateFilter = function () {
     };
@@ -23,7 +24,7 @@
     this.getFilterStat = function () {
       var element = document.querySelector(this.filterElementsSelector(this.name));
       this.matches = 0;
-      window.goods.forEach(function (good) {
+      window.catalog.goods.forEach(function (good) {
         this.matches += (this.isMatch(good, element) ? 1 : 0);
       }, this);
       element.parentNode.querySelector('.range__price-count > span').textContent = '(' + this.matches + ')';
@@ -50,6 +51,7 @@
     };
 
     this.resetFilter = function () {
+      this.active = false;
       document.querySelectorAll(this.filterElementsSelector(this.name)).forEach(function (element) {
         element.checked = false;
       });
@@ -58,7 +60,7 @@
     this.updateFilter = function () {
       this.active = (document.querySelector(this.filterElementsSelector(this.name) + ':checked') && true);
       if (this.active && (this.filtersToReset.length > 0)) {
-        window.filterList.forEach(function (filterToReset) {
+        window.filter.filterList.forEach(function (filterToReset) {
           this.filtersToReset.forEach(function (resetName) {
             if ((resetName === 'all' && filterToReset.name !== this.name) || (filterToReset.name === resetName)) {
               filterToReset.resetFilter();
@@ -78,7 +80,7 @@
     this.getFilterStat = function () {
       document.querySelectorAll(this.filterElementsSelector(this.name)).forEach(function (element) {
         this.matches = 0;
-        window.goods.forEach(function (good) {
+        window.catalog.goods.forEach(function (good) {
           this.matches += (this.isMatch(good, element) ? 1 : 0);
         }, this);
         updateFilterMatchesCountElement(element, this.matches);
@@ -140,13 +142,12 @@
 
   MarkFilter.prototype = Object.create(TypeFilter.prototype);
 
-
   var PriceFilter = function () {
     Filter.apply(this, arguments);
     this.name = 'price';
     this.active = true;
-    this.filterMin = window.MIN_PRICE;
-    this.filterMax = window.MAX_PRICE;
+    this.filterMin = window.utils.limits.MIN_PRICE;
+    this.filterMax = window.utils.limits.MAX_PRICE;
     this.rangeFilter = document.querySelector('.range__filter');
     this.pinLeft = this.rangeFilter.querySelector('.range__btn--left');
     this.pinRight = this.rangeFilter.querySelector('.range__btn--right');
@@ -165,17 +166,65 @@
       this.pinRight.addEventListener('mousedown', onFilterPinMouseDown);
       this.pinLeft.addEventListener('mousedown', onFilterPinMouseDown);
       this.pinMoved = false;
-      document.querySelector('.range__prices .range__price--min').textContent = window.MIN_PRICE;
-      document.querySelector('.range__prices .range__price--max').textContent = window.MAX_PRICE;
-      this.filterMin = window.MIN_PRICE;
-      this.filterMax = window.MAX_PRICE;
+      document.querySelector('.range__prices .range__price--min').textContent = window.utils.limits.MIN_PRICE;
+      document.querySelector('.range__prices .range__price--max').textContent = window.utils.limits.MAX_PRICE;
+      this.filterMin = window.utils.limits.MIN_PRICE;
+      this.filterMax = window.utils.limits.MAX_PRICE;
       changePinPosition(this.pinLeft, this.calcFilterPosition(this.filterMin) - this.pinWidth / 2);
       changePinPosition(this.pinRight, this.calcFilterPosition(this.filterMax));
       this.lineUpdate();
     };
-  };
 
-  PriceFilter.prototype = Object.create(Filter.prototype);
+    this.calcFilterPosition = function (value) {
+      return Math.round((this.maxX * value) / window.utils.limits.TOTAL_MAX_PRICE);
+    };
+
+    this.updateValue = function () {
+      document.querySelector('.range__prices .range__price--min').textContent = this.filterMin;
+      document.querySelector('.range__prices .range__price--max').textContent = this.filterMax;
+      this.getFilterStat();
+    };
+    this.lineUpdate = function () {
+      var left = this.pinLeft.offsetLeft;
+      var right = this.pinRight.offsetLeft;
+      this.filterMin = this.calcFilterValue(left);
+      this.filterMax = this.calcFilterValue(right);
+      this.filterLine.style.right = (this.maxX - right) + 'px';
+      this.filterLine.style.left = (left + this.pinWidth / 2) + 'px';
+      this.updateValue();
+    };
+    this.calcFilterValue = function (pos) {
+      pos += this.pinWidth / 2;
+      return Math.round((window.utils.limits.TOTAL_MAX_PRICE * pos) / this.rangeFilter.clientWidth);
+    };
+
+    this.calcPin = function (X) {
+      X -= this.rangeFilter.offsetLeft;
+      var filterValue = this.calcFilterValue(X);
+      var middle = this.minX + ((this.maxX - this.minX) / 2);
+      if ((X < middle) ||
+        (
+          (
+            (this.pinRight.offsetLeft > middle &&
+              this.pinLeft.offsetLeft > middle) ||
+            (this.pinRight.offsetLeft < middle &&
+              this.pinLeft.offsetLeft < middle)
+          ) &&
+          X < this.pinRight.offsetLeft &&
+          X < this.pinLeft.offsetLeft
+        )
+      ) {
+        changePinPosition(this.pinLeft, X - 0.5 * this.pinWidth, this.minX, this.pinRight.offsetLeft);
+        this.filterMin = filterValue;
+      } else {
+        changePinPosition(this.pinRight, X - 0.5 * this.pinWidth, this.pinLeft.offsetLeft, this.maxX);
+        this.filterMax = filterValue;
+      }
+      pinMovedOff();
+      this.lineUpdate();
+      window.catalog.render();
+    };
+  };
 
   var onRangeFilterClick = function (evt) {
     evt.preventDefault();
@@ -187,9 +236,18 @@
     var X = evt.clientX;
     priceFilter.calcPin(X);
   };
-
   var pinMovedOff = function () {
     priceFilter.pinMoved = false;
+  };
+
+  var changePinPosition = function (element, X, min, max) {
+    if (X < min) {
+      X = min;
+    }
+    if (X > max) {
+      X = max;
+    }
+    element.style.left = X + 'px';
   };
 
   var onMouseMove = function (moveEvt) {
@@ -197,13 +255,15 @@
     moveEvt.preventDefault();
     var shift = priceFilter.startX - moveEvt.clientX;
     priceFilter.startX = moveEvt.clientX;
-    changePinPosition(priceFilter.pinEvt.target, priceFilter.pinEvt.target.offsetLeft - shift, priceFilter.minX, priceFilter.maxX);
+    var min = (priceFilter.pinEvt.target === priceFilter.pinLeft) ? priceFilter.minX : priceFilter.pinLeft.offsetLeft;
+    var max = (priceFilter.pinEvt.target === priceFilter.pinRight) ? priceFilter.maxX : priceFilter.pinRight.offsetLeft;
+    changePinPosition(priceFilter.pinEvt.target, priceFilter.pinEvt.target.offsetLeft - shift, min, max);
     priceFilter.lineUpdate();
     priceFilter.rangeFilter.removeEventListener('click', onRangeFilterClick);
   };
 
   var onMouseUp = function (upEvt) {
-    window.renderCatalog();
+    window.catalog.render();
     upEvt.preventDefault();
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
@@ -219,118 +279,81 @@
     document.addEventListener('mouseup', onMouseUp);
   };
 
-  PriceFilter.prototype.calcFilterValue = function (pos) {
-    pos += this.pinWidth / 2;
-    return Math.round((window.TOTAL_MAX_PRICE * pos) / this.rangeFilter.clientWidth);
-  };
-  PriceFilter.prototype.calcFilterPosition = function (value) {
-    return Math.round((this.maxX * value) / window.TOTAL_MAX_PRICE);
-  };
-  var changePinPosition = function (element, X, min, max) {
-    if (X < min) {
-      X = min;
-    }
-    if (X > max) {
-      X = max;
-    }
-    element.style.left = X + 'px';
-  };
-
-  PriceFilter.prototype.updateValue = function () {
-    document.querySelector('.range__prices .range__price--min').textContent = this.filterMin;
-    document.querySelector('.range__prices .range__price--max').textContent = this.filterMax;
-    this.getFilterStat();
-  };
-
-  PriceFilter.prototype.lineUpdate = function () {
-    var left = this.pinLeft.offsetLeft;
-    var right = this.pinRight.offsetLeft;
-    if (left > right) {
-      right = this.pinLeft.offsetLeft;
-      left = this.pinRight.offsetLeft;
-    }
-    this.filterMin = this.calcFilterValue(left);
-    this.filterMax = this.calcFilterValue(right);
-    this.filterLine.style.right = (this.maxX - right) + 'px';
-    this.filterLine.style.left = (left + this.pinWidth / 2) + 'px';
-    this.updateValue();
-  };
-
-  PriceFilter.prototype.calcPin = function (X) {
-    X -= this.rangeFilter.offsetLeft;
-    var filterValue = this.calcFilterValue(X);
-    if (X < this.minX + ((this.maxX - this.minX) / 2)) {
-      changePinPosition(this.pinLeft, X - 0.5 * this.pinWidth, this.minX, this.pinRight.offsetLeft);
-      this.filterMin = filterValue;
-    } else {
-      changePinPosition(this.pinRight, X - 0.5 * this.pinWidth, this.pinLeft.offsetLeft, this.maxX);
-      this.filterMax = filterValue;
-    }
-    pinMovedOff();
-    this.lineUpdate();
-    window.renderCatalog();
-  };
-
-  window.filterList = [];
+  PriceFilter.prototype = Object.create(Filter.prototype);
 
   var priceFilter = new PriceFilter();
 
-  window.filterList = [
-    priceFilter,
-    new MarkFilter('mark'),
-    new TypeFilter('food-type'),
-    new PropertyFilter('food-property')
-  ];
+  window.filter = {
+    filterList: [
+      priceFilter,
+      new MarkFilter('mark'),
+      new TypeFilter('food-type'),
+      new PropertyFilter('food-property')
+    ],
 
-  window.sorting = {
-    name: 'sort',
-    sort: function (good1, good2) {
-      var res = this.getActiveSort(good1, good2);
-      return res;
-    },
-    getActiveSort: function (good1, good2) {
-      var activeSort = 'popular';
-      var filter = document.querySelector('.catalog__filter > li > input[name^="' + this.name + '"]:checked');
-      if (filter) {
-        activeSort = filter.value;
+    sorting: {
+      name: 'sort',
+      sort: function (good1, good2) {
+        var res = this.getActiveSort(good1, good2);
+        return res;
+      },
+      getActiveSort: function (good1, good2) {
+        var activeSort = 'popular';
+        var filter = document.querySelector('.catalog__filter > li > input[name^="' + this.name + '"]:checked');
+        if (filter) {
+          activeSort = filter.value;
+        }
+        return this.sortType[activeSort](good1, good2);
+      },
+      sortType: {
+        popular: function () {
+          return 0;
+        },
+        expensive: function (good1, good2) {
+          return good2.price - good1.price;
+        },
+        cheep: function (good1, good2) {
+          return good1.price - good2.price;
+        },
+        rating: function (good1, good2) {
+          return (good2.rating.value * window.MAX_RATING_NUMBER + good2.rating.number) - (good1.rating.value * window.utils.limits.MAX_RATING_NUMBER + good1.rating.number);
+        }
       }
-      return this.sortType[activeSort](good1, good2);
     },
-    sortType: {
-      popular: function () {
-        return 0;
-      },
-      expensive: function (good1, good2) {
-        return good2.price - good1.price;
-      },
-      cheep: function (good1, good2) {
-        return good1.price - good2.price;
-      },
-      rating: function (good1, good2) {
-        return (good2.rating.value * window.MAX_RATING_NUMBER + good2.rating.number) - (good1.rating.value * window.MAX_RATING_NUMBER + good1.rating.number);
+
+    resetAll: function () {
+      window.filter.filterList.forEach(function (filter) {
+        filter.resetFilter();
+      });
+    },
+    updateAll: function () {
+      window.filter.filterList.forEach(function (filter) {
+        filter.updateFilter();
+      });
+    },
+    onResetAll: function (evt) {
+      evt.preventDefault();
+      window.filter.resetAll();
+      window.catalog.render();
+    },
+    renderStat: function (name) {
+      if (name === undefined) {
+        window.filter.filterList.forEach(function (filter) {
+          filter.getFilterStat();
+        });
+        return;
+      }
+
+      var oneFilter = window.filter.filterList.find(function (filter) {
+        return filter.name === name;
+      });
+      if (oneFilter) {
+        oneFilter.getFilterStat();
       }
     }
   };
 
-  window.resetFilters = function () {
-    window.filterList.forEach(function (filter) {
-      filter.resetFilter();
-    });
-  };
-
-  window.updateFilters = function () {
-    window.filterList.forEach(function (filter) {
-      filter.updateFilter();
-    });
-  };
-
-  window.onFilterResetAll = function (evt) {
-    evt.preventDefault();
-    window.resetFilters();
-    window.renderCatalog();
-  };
-
-  document.querySelector('.catalog__submit').addEventListener('click', window.onFilterResetAll);
+  document.querySelector('.catalog__submit').addEventListener('click', window.filter.onResetAll);
 
   document.querySelectorAll('.catalog__filter > li > input').forEach(function (element) {
     element.addEventListener('change', function (evt) {
@@ -340,30 +363,15 @@
           el.checked = el.value === evt.target.value;
         });
       }
-      var oneFilter = window.filterList.find(function (filter) {
+      var oneFilter = window.filter.filterList.find(function (filter) {
         return filter.name === evt.target.name;
       });
       if (oneFilter) {
         oneFilter.updateFilter();
       }
-      window.updateFilters();
-      window.renderCatalog();
+      window.filter.updateAll();
+      window.catalog.render();
     });
   });
-
-  window.filterRenderStat = function (name) {
-    if (name === undefined) {
-      window.filterList.forEach(function (filter) {
-        filter.getFilterStat();
-      });
-    } else {
-      var oneFilter = window.filterList.find(function (filter) {
-        return filter.name === name;
-      });
-      if (oneFilter) {
-        oneFilter.getFilterStat();
-      }
-    }
-  };
 
 })();
