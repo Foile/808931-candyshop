@@ -2,23 +2,22 @@
 (function () {
   var shippingPicturePath = 'img/map/';
   var checkCardNumber = function (cardNumber) {
-    var i = 0;
-    var sum = 0;
-    var n = 0;
-    var res = -1;
-    while (i < cardNumber.length) {
-      i++;
-      if (Number(cardNumber[i - 1]) === 0) {
-        sum = 1; continue;
-      }
-      n = Number(cardNumber[i - 1]);
-      if (i % 2 > 0) {
-        n = (n * 2 > 9) ? n * 2 - 9 : n * 2;
-      }
-      sum += n;
-    }
-    res = sum % 10;
-    return (res === 0) && (cardNumber.length >= 16) && (cardNumber.length <= 20);
+    var luhn = function (card) {
+      var arr = card.split('').map(function (char, index) {
+        var digit = parseInt(char, 10);
+        if ((index + card.length) % 2 === 0) {
+          var digitX2 = digit * 2;
+          return digitX2 > 9 ? digitX2 - 9 : digitX2;
+        }
+        return digit;
+      });
+      var res = !(arr.reduce(function (a, b) {
+        return a + b;
+      }, 0) % 10);
+      return res;
+    };
+
+    return luhn(cardNumber) && (cardNumber.length >= 16) && (cardNumber.length <= 20);
   };
 
   var checkCvc = function (cvc) {
