@@ -3,7 +3,7 @@
   var shippingPicturePath = 'img/map/';
   var checkCardNumber = function (cardNumber) {
     var luhn = function (card) {
-      var arr = card.split('').map(function (char, index) {
+      var numbers = card.split('').map(function (char, index) {
         var digit = parseInt(char, 10);
         if ((index + card.length) % 2 === 0) {
           var digitX2 = digit * 2;
@@ -11,7 +11,7 @@
         }
         return digit;
       });
-      var res = !(arr.reduce(function (a, b) {
+      var res = !(numbers.reduce(function (a, b) {
         return a + b;
       }, 0) % 10);
       return res;
