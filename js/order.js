@@ -69,7 +69,9 @@
   };
 
   document.querySelectorAll('.payment__inputs > div > p > input').forEach(function (field) {
-    field.addEventListener('blur', checkCardFields);
+    field.addEventListener('blur', function () {
+      checkCardFields();
+    });
   });
 
   var onPaymentTypeClick = function () {
