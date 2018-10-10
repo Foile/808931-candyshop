@@ -11,9 +11,9 @@
     xhr.addEventListener('load', function () {
       if (xhr.status === _HTML_OK) {
         onLoad(xhr.response);
-      } else {
-        onError('Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText);
+        return;
       }
+      onError('Cтатус ответа: ' + xhr.status + ' ' + xhr.statusText);
     });
     xhr.addEventListener('error', function () {
       onError('Произошла ошибка соединения');

@@ -23,11 +23,6 @@
       return el;
     },
     toggleClass: function (element, add, name) {
-      /*  if (!add) {
-          element.classList.remove(name);
-        } else {
-          element.classList.add(name);
-        }*/
       return (!add) ? element.classList.remove(name) : element.classList.add(name);
     },
     showModal: function (modal) {
