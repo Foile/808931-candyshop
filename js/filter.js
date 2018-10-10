@@ -202,17 +202,9 @@
       X -= this.rangeFilter.offsetLeft;
       var filterValue = this.calcFilterValue(X);
       var middle = this.minX + ((this.maxX - this.minX) / 2);
-      if ((X < middle) ||
-        (
-          (
-            (this.pinRight.offsetLeft > middle &&
-              this.pinLeft.offsetLeft > middle) ||
-            (this.pinRight.offsetLeft < middle &&
-              this.pinLeft.offsetLeft < middle)
-          ) &&
-          X < this.pinRight.offsetLeft &&
-          X < this.pinLeft.offsetLeft
-        )
+      var left = this.pinLeft.offsetLeft;
+      var right = this.pinRight.offsetLeft;
+      if ((X < right && X < left) || (X < middle && left < middle && right < middle && X < right)
       ) {
         changePinPosition(this.pinLeft, X - 0.5 * this.pinWidth, this.minX, this.pinRight.offsetLeft);
         this.filterMin = filterValue;
@@ -316,7 +308,7 @@
           return good1.price - good2.price;
         },
         rating: function (good1, good2) {
-          return (good2.rating.value * window.MAX_RATING_NUMBER + good2.rating.number) - (good1.rating.value * window.utils.limits.MAX_RATING_NUMBER + good1.rating.number);
+          return (good2.rating.value * window.utils.limits.MAX_RATING_NUMBER + good2.rating.number) - (good1.rating.value * window.utils.limits.MAX_RATING_NUMBER + good1.rating.number);
         }
       }
     },
