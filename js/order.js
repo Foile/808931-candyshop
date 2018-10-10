@@ -28,7 +28,7 @@
   var checkDate = function (date) {
     var res = true;
     var dateMatch = date.match('([0-9]{2})/([0-9]{2})');
-    if (dateMatch.length < 2) {
+    if (!dateMatch) {
       return false;
     }
     var curDate = new Date();
@@ -51,26 +51,25 @@
     return res;
   };
 
-
-  var onBlurCardFields = function () {
-    var isCard = document.querySelector('#payment__card').checked;
+  var checkCardFields = function () {
+    var isNotCard = !document.querySelector('#payment__card').checked;
     var cardNumber = document.querySelector('#payment__card-number');
-    var valid = isCard && checkCardNumber(cardNumber.value);
+    var valid = isNotCard || checkCardNumber(cardNumber.value);
     cardNumber.setCustomValidity(valid ? '' : 'Неверный номер карты');
     var res = valid;
     var cvc = document.querySelector('#payment__card-cvc');
-    valid = isCard && checkCvc(cvc.value);
+    valid = isNotCard || checkCvc(cvc.value);
     res = res && valid;
     cvc.setCustomValidity(valid ? '' : 'Неверный CVC');
     var date = document.querySelector('#payment__card-date');
-    valid = isCard && checkDate(date.value);
+    valid = isNotCard || checkDate(date.value);
     res = res && valid;
     date.setCustomValidity(valid ? '' : 'Неверный срок действия карты');
     document.querySelector('.payment__card-wrap .payment__card-status').textContent = res ? 'Одобрен' : 'Не определён';
   };
 
   document.querySelectorAll('.payment__inputs > div > p > input').forEach(function (field) {
-    field.addEventListener('blur', onBlurCardFields);
+    field.addEventListener('blur', checkCardFields);
   });
 
   var onPaymentTypeClick = function () {
@@ -79,8 +78,9 @@
     document.querySelector('#payment__card-cvc').required = isCard;
     document.querySelector('#payment__card-date').required = isCard;
     document.querySelector('#payment__cardholder').required = isCard;
-    window.toggleClass(document.querySelector('.payment__card-wrap'), !isCard, 'visually-hidden');
-    window.toggleClass(document.querySelector('.payment__cash-wrap'), !document.querySelector('#payment__cash').checked, 'visually-hidden');
+    window.utils.toggleClass(document.querySelector('.payment__card-wrap'), !isCard, 'visually-hidden');
+    window.utils.toggleClass(document.querySelector('.payment__cash-wrap'), !document.querySelector('#payment__cash').checked, 'visually-hidden');
+    checkCardFields();
   };
 
   var onDeliverTypeClick = function () {
@@ -88,8 +88,9 @@
     document.querySelector('#deliver__street').required = isCourier;
     document.querySelector('#deliver__house').required = isCourier;
     document.querySelector('#deliver__room').required = isCourier;
-    window.toggleClass(document.querySelector('.deliver__store'), !document.querySelector('#deliver__store').checked, 'visually-hidden');
-    window.toggleClass(document.querySelector('.deliver__courier'), !isCourier, 'visually-hidden');
+    window.utils.toggleClass(document.querySelector('.deliver__store'), !document.querySelector('#deliver__store').checked, 'visually-hidden');
+    window.utils.toggleClass(document.querySelector('.deliver__courier'), !isCourier, 'visually-hidden');
+    checkCardFields();
   };
 
   var paymentType = document.querySelector('.payment__method');
@@ -118,7 +119,7 @@
       var successModal = document.querySelector('.modal--success');
       window.utils.showModal(successModal);
       resetForm(form);
-      window.utils.init();
+      window.init();
     };
     window.backend.sendOrder(formData, onLoad, window.utils.onError);
   };
